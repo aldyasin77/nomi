@@ -26,6 +26,7 @@ import {
   DrawerTitle,
   DrawerDescription,
 } from '@/components/ui/drawer'
+import toast from 'react-hot-toast'
 
 const formatCurrency = (amount) => {
   return new Intl.NumberFormat('id-ID', {
@@ -41,6 +42,12 @@ export default function NotificationBell() {
   const [open, setOpen] = useState(false)
   const { notifications, unreadCount, urgentCount, markAsRead, markAllAsRead } =
     useNotifications()
+
+  const handleMarkAllAsRead = (e) => {
+    e?.stopPropagation?.()
+    markAllAsRead()
+    toast.success('Semua notifikasi ditandai sudah dibaca', { icon: '✓' })
+  }
 
   const handleItemClick = (notif) => {
     markAsRead(notif.id)
@@ -87,11 +94,11 @@ export default function NotificationBell() {
         {unreadCount > 0 && (
           <button
             type="button"
-            onClick={markAllAsRead}
+            onClick={handleMarkAllAsRead}
             className="text-[11px] font-semibold text-[#1A2C4C] hover:underline cursor-pointer flex items-center gap-1"
           >
             <Check size={12} />
-            <span>Tandai dibaca</span>
+            <span>Tandai sudah dibaca</span>
           </button>
         )}
       </div>
@@ -192,14 +199,14 @@ export default function NotificationBell() {
       aria-label="Notifikasi Transaksi Rutin"
     >
       <Bell size={18} />
-      {notifications.length > 0 && (
+      {unreadCount > 0 && (
         <span
           className={`
             absolute top-2 right-2 flex items-center justify-center rounded-full ring-2 ring-white text-[9px] font-black text-white
             ${urgentCount > 0 ? 'w-4 h-4 bg-rose-500 animate-pulse' : 'w-3.5 h-3.5 bg-indigo-600'}
           `}
         >
-          {notifications.length > 9 ? '9+' : notifications.length}
+          {unreadCount > 9 ? '9+' : unreadCount}
         </span>
       )}
     </button>

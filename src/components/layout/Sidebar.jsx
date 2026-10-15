@@ -20,6 +20,8 @@ const navItems = [
   { to: '/settings', icon: Settings, label: 'Settings' },
 ]
 
+import { currentVersion } from '@/data/changelog'
+
 export default function Sidebar() {
   const { signOut, user } = useAuth()
   const { notifications } = useNotifications()
@@ -85,7 +87,7 @@ export default function Sidebar() {
       </nav>
 
       {/* User & Sign Out */}
-      <div className="px-3 pb-6 space-y-2">
+      <div className="px-3 pb-5 space-y-2">
         <div className="flex items-center gap-3 px-4 py-3 bg-white/40 rounded-2xl border border-white/40">
           <div className="w-9 h-9 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-700 font-bold text-sm">
             <span>{userInitial}</span>
@@ -107,6 +109,10 @@ export default function Sidebar() {
           <LogOut size={16} />
           <span>Sign Out</span>
         </button>
+        {/* App Version Label */}
+        <p className="text-center text-xs text-muted-foreground pt-1 tracking-tight select-none">
+          Nomi {currentVersion}
+        </p>
       </div>
     </aside>
   )

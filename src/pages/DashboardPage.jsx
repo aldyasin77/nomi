@@ -23,7 +23,6 @@ import RecentTransactions from '@/components/dashboard/RecentTransactions'
 import TransactionModal from '@/components/transactions/TransactionModal'
 import { Shader, Godrays } from '@/components/shaders'
 import NotificationBell from '@/components/notifications/NotificationBell'
-import RecurringNotificationBanner from '@/components/notifications/RecurringNotificationBanner'
 import Button from '@/components/ui/Button'
 import toast from 'react-hot-toast'
 import logoSvg from '@/assets/logo.svg'
@@ -123,9 +122,6 @@ export default function DashboardPage() {
           </div>
           <NotificationBell />
         </div>
-
-        {/* Recurring Notification Alert Banner (Mobile) */}
-        <RecurringNotificationBanner />
 
         {/* b. Main Wallet Card (Godrays Shader Background & Contactless NFC) */}
         <div className="relative overflow-hidden isolate rounded-2xl p-5 text-white shadow-2xl bg-[#0F172A] border border-white/10">
@@ -281,9 +277,6 @@ export default function DashboardPage() {
             </Button>
           </div>
         </div>
-
-        {/* Recurring Notification Alert Banner (Desktop) */}
-        <RecurringNotificationBanner />
 
         {/* KPI Cards */}
         <KPICards

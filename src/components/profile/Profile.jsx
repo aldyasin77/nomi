@@ -9,14 +9,17 @@ import {
   LogOut,
   Camera,
   KeyRound,
+  Rocket,
 } from 'lucide-react'
 import { useAuth } from '@/context/AuthContext'
 import { useNotifications } from '@/hooks/useNotifications'
 import { supabase } from '@/lib/supabase'
+import { currentVersion } from '@/data/changelog'
 import Modal from '@/components/ui/Modal'
 import { Input } from '@/components/ui/input'
 import Button from '@/components/ui/Button'
 import ChangePasswordModal from './ChangePasswordModal'
+import ChangelogModal from './ChangelogModal'
 import toast from 'react-hot-toast'
 
 export default function Profile({ onOpenCategoryConfig }) {
@@ -26,6 +29,7 @@ export default function Profile({ onOpenCategoryConfig }) {
 
   const [editProfileOpen, setEditProfileOpen] = useState(false)
   const [changePasswordOpen, setChangePasswordOpen] = useState(false)
+  const [changelogOpen, setChangelogOpen] = useState(false)
   const [fullName, setFullName] = useState(
     user?.user_metadata?.full_name || user?.email?.split('@')[0] || ''
   )
@@ -233,7 +237,36 @@ export default function Profile({ onOpenCategoryConfig }) {
               </button>
             </li>
 
-            {/* Menu 5: Ubah Kata Sandi */}
+            {/* Menu 5: Apa yang Baru? (Changelog) */}
+            <li>
+              <button
+                type="button"
+                onClick={() => setChangelogOpen(true)}
+                className="w-full flex items-center justify-between px-5 py-4 hover:bg-slate-50 transition-colors text-left cursor-pointer group"
+              >
+                <div className="flex items-center gap-3.5">
+                  <div className="w-10 h-10 rounded-2xl bg-amber-50 border border-amber-100/60 flex items-center justify-center text-amber-600 group-hover:scale-105 transition-transform">
+                    <Rocket size={19} />
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <p className="font-semibold text-slate-800">
+                        Apa yang Baru?
+                      </p>
+                      <span className="text-[10px] font-bold px-1.5 py-0.2 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
+                        {currentVersion}
+                      </span>
+                    </div>
+                    <p className="text-xs text-slate-400">
+                      Catatan pembaruan & riwayat fitur Nomi
+                    </p>
+                  </div>
+                </div>
+                <ChevronRight size={18} className="text-slate-300 group-hover:text-slate-600 transition-colors" />
+              </button>
+            </li>
+
+            {/* Menu 6: Ubah Kata Sandi */}
             <li>
               <button
                 type="button"
@@ -260,8 +293,8 @@ export default function Profile({ onOpenCategoryConfig }) {
         </div>
       </div>
 
-      {/* 3. Sign Out Button */}
-      <div className="pt-2">
+      {/* 3. Sign Out Button & Version Label */}
+      <div className="pt-2 text-center space-y-3">
         <button
           type="button"
           onClick={handleSignOut}
@@ -270,6 +303,10 @@ export default function Profile({ onOpenCategoryConfig }) {
           <LogOut size={16} />
           <span>Keluar dari Akun</span>
         </button>
+
+        <p className="text-xs text-muted-foreground tracking-tight select-none">
+          Nomi {currentVersion}
+        </p>
       </div>
 
       {/* 4. Edit Profile Bottom Sheet Modal */}
@@ -333,6 +370,12 @@ export default function Profile({ onOpenCategoryConfig }) {
       <ChangePasswordModal
         isOpen={changePasswordOpen}
         onClose={() => setChangePasswordOpen(false)}
+      />
+
+      {/* 6. Changelog Responsive Modal */}
+      <ChangelogModal
+        isOpen={changelogOpen}
+        onClose={() => setChangelogOpen(false)}
       />
     </div>
   )

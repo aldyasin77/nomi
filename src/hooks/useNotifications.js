@@ -1,7 +1,8 @@
-import { useState, useMemo, useCallback } from 'react'
+import { useState, useEffect, useMemo, useCallback } from 'react'
 import { useRecurringTransactions } from './useRecurringTransactions'
 
 const READ_STORAGE_KEY = 'nomi_read_notifications'
+const SYNC_EVENT = 'nomi_read_notifications_sync'
 
 export function useNotifications() {
   const { recurringList } = useRecurringTransactions()
@@ -14,11 +15,35 @@ export function useNotifications() {
     }
   })
 
-  // Save readIds to localStorage
+  // Synchronize readIds across components and tabs
+  useEffect(() => {
+    const handleSync = (e) => {
+      if (e?.detail) {
+        setReadIds(e.detail)
+      } else {
+        try {
+          const saved = localStorage.getItem(READ_STORAGE_KEY)
+          setReadIds(saved ? JSON.parse(saved) : [])
+        } catch {
+          // ignore
+        }
+      }
+    }
+
+    window.addEventListener(SYNC_EVENT, handleSync)
+    window.addEventListener('storage', handleSync)
+    return () => {
+      window.removeEventListener(SYNC_EVENT, handleSync)
+      window.removeEventListener('storage', handleSync)
+    }
+  }, [])
+
+  // Save readIds to localStorage and notify other instances
   const saveReadIds = useCallback((newReadIds) => {
     setReadIds(newReadIds)
     try {
       localStorage.setItem(READ_STORAGE_KEY, JSON.stringify(newReadIds))
+      window.dispatchEvent(new CustomEvent(SYNC_EVENT, { detail: newReadIds }))
     } catch (e) {
       console.error('Failed to save read notifications:', e)
     }
@@ -109,21 +134,28 @@ export function useNotifications() {
     return notifications.filter((n) => !n.isRead).length
   }, [notifications])
 
-  // Urgent items count (due today or within 3 days)
+  // Urgent items count (only unread items due today or within 3 days)
   const urgentCount = useMemo(() => {
-    return notifications.filter((n) => n.urgency === 'today' || n.urgency === 'soon').length
+    return notifications.filter((n) => !n.isRead && (n.urgency === 'today' || n.urgency === 'soon')).length
   }, [notifications])
 
   const markAsRead = useCallback((notifId) => {
-    if (!readIds.includes(notifId)) {
-      saveReadIds([...readIds, notifId])
-    }
-  }, [readIds, saveReadIds])
+    setReadIds((prev) => {
+      if (prev.includes(notifId)) return prev
+      const next = [...prev, notifId]
+      saveReadIds(next)
+      return next
+    })
+  }, [saveReadIds])
 
   const markAllAsRead = useCallback(() => {
     const allIds = notifications.map((n) => n.id)
-    saveReadIds(Array.from(new Set([...readIds, ...allIds])))
-  }, [notifications, readIds, saveReadIds])
+    setReadIds((prev) => {
+      const next = Array.from(new Set([...prev, ...allIds]))
+      saveReadIds(next)
+      return next
+    })
+  }, [notifications, saveReadIds])
 
   return {
     notifications,
