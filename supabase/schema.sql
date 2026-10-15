@@ -18,6 +18,7 @@ CREATE TABLE IF NOT EXISTS public.wallets (
     type TEXT NOT NULL CHECK (type IN ('cash', 'bank', 'e-wallet', 'savings')),
     balance NUMERIC(15, 2) NOT NULL DEFAULT 0.00,
     annual_interest_rate NUMERIC(5, 2) DEFAULT 0.00,
+    interest_payout_date NUMERIC(2, 0) DEFAULT NULL,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );

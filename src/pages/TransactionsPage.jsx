@@ -278,7 +278,7 @@ export default function TransactionsPage() {
       {/* 3. Summary Cards: Responsive Flexbox (flex-col on small screen, flex-row on md/large) */}
       <div className="flex flex-col md:flex-row gap-4">
         {/* Income Card */}
-        <GlassCard className="flex-1 p-5 rounded-3xl bg-white shadow-[0_8px_25px_rgba(0,0,0,0.03)] border border-slate-100 flex items-center justify-between">
+        <GlassCard className="flex-1 p-5 rounded-3xl bg-white shadow-[0_8px_25px_rgba(0,0,0,0.03)] border border-slate-100 flex items-center">
           <div className="flex items-center gap-3.5">
             <div className="w-12 h-12 rounded-2xl bg-emerald-50 border border-emerald-100/80 flex items-center justify-center text-emerald-600 shadow-xs">
               <TrendingUp size={22} />
@@ -292,13 +292,10 @@ export default function TransactionsPage() {
               </p>
             </div>
           </div>
-          <span className="px-2.5 py-1 rounded-full bg-emerald-500/10 text-emerald-700 text-xs font-bold">
-            + Income
-          </span>
         </GlassCard>
 
         {/* Expense Card */}
-        <GlassCard className="flex-1 p-5 rounded-3xl bg-white shadow-[0_8px_25px_rgba(0,0,0,0.03)] border border-slate-100 flex items-center justify-between">
+        <GlassCard className="flex-1 p-5 rounded-3xl bg-white shadow-[0_8px_25px_rgba(0,0,0,0.03)] border border-slate-100 flex items-center">
           <div className="flex items-center gap-3.5">
             <div className="w-12 h-12 rounded-2xl bg-rose-50 border border-rose-100/80 flex items-center justify-center text-rose-500 shadow-xs">
               <TrendingDown size={22} />
@@ -312,9 +309,6 @@ export default function TransactionsPage() {
               </p>
             </div>
           </div>
-          <span className="px-2.5 py-1 rounded-full bg-rose-500/10 text-rose-700 text-xs font-bold">
-            − Outcome
-          </span>
         </GlassCard>
       </div>
 

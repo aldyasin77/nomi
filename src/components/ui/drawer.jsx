@@ -3,9 +3,10 @@ import { cn } from "@/lib/utils"
 import { Drawer as DrawerPrimitive } from "vaul"
 
 function Drawer({
+  repositionInputs = false,
   ...props
 }) {
-  return <DrawerPrimitive.Root data-slot="drawer" {...props} />
+  return <DrawerPrimitive.Root repositionInputs={repositionInputs} data-slot="drawer" {...props} />
 }
 
 function DrawerTrigger({
@@ -53,15 +54,15 @@ function DrawerContent({
       <DrawerPrimitive.Content
         data-slot="drawer-content"
         className={cn(
-          "group/drawer-content fixed z-50 flex h-auto flex-col bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 shadow-2xl transition-all duration-300 outline-hidden",
-          "data-[vaul-drawer-direction=bottom]:inset-x-0 data-[vaul-drawer-direction=bottom]:bottom-0 data-[vaul-drawer-direction=bottom]:mt-12 data-[vaul-drawer-direction=bottom]:max-h-[92vh] data-[vaul-drawer-direction=bottom]:rounded-t-2xl md:data-[vaul-drawer-direction=bottom]:rounded-t-3xl data-[vaul-drawer-direction=bottom]:border-t border-slate-100 dark:border-slate-800",
-          "max-w-lg mx-auto md:left-1/2 md:-translate-x-1/2",
+          "group/drawer-content fixed inset-x-0 bottom-0 z-50 flex flex-col bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 shadow-2xl transition-all duration-300 outline-none",
+          "max-h-[85dvh] rounded-t-3xl border-t border-slate-100 dark:border-slate-800",
+          "w-full max-w-lg mx-auto",
           className
         )}
         {...props}
       >
         <div className="mx-auto mt-3 mb-1 h-1.5 w-12 shrink-0 rounded-full bg-slate-200 dark:bg-slate-700" />
-        <div className="overflow-y-auto max-h-[calc(92vh-2rem)] px-1 pb-6">
+        <div className="flex-1 overflow-y-auto overscroll-contain px-1 pb-6">
           {children}
         </div>
       </DrawerPrimitive.Content>

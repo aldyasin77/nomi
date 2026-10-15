@@ -88,15 +88,18 @@ export default function WalletCard({ wallet, onEdit, onDelete }) {
           <p className="text-3xl font-bold tracking-tight">{formatCurrency(balance)}</p>
         </div>
 
-        {/* Interest Projection for Savings */}
-        {isSavings && apr > 0 && (
-          <div className="mt-4 pt-4 border-t border-white/10">
-            <div className="flex items-center gap-2">
-              <TrendingUp size={14} className="text-cyan-300" />
-              <span className="text-xs text-white/60">
-                APR {apr}% · Projected interest: {formatCurrency(interestProjection)}
-              </span>
+        {/* Interest info for Wallets with APR */}
+        {apr > 0 && (
+          <div className="mt-4 pt-3 border-t border-white/10 flex items-center justify-between text-xs">
+            <div className="flex items-center gap-1.5 text-cyan-200">
+              <TrendingUp size={14} />
+              <span className="font-medium">Bunga {apr}%/thn</span>
             </div>
+            {wallet.interest_payout_date && (
+              <span className="text-white/80 bg-white/15 px-2.5 py-0.5 rounded-full font-semibold text-[10px]">
+                Cair tgl {wallet.interest_payout_date}
+              </span>
+            )}
           </div>
         )}
       </div>

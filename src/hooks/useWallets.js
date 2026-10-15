@@ -52,6 +52,7 @@ export function useWallets() {
         id: `w-${Date.now()}`,
         balance: parseFloat(wallet.balance) || 0,
         annual_interest_rate: parseFloat(wallet.annual_interest_rate) || 0,
+        interest_payout_date: wallet.interest_payout_date || null,
         created_at: new Date().toISOString(),
       }
       const updated = [...wallets, newWallet]
@@ -60,18 +61,37 @@ export function useWallets() {
       return newWallet
     }
 
-    const { data, error } = await supabase
-      .from('wallets')
-      .insert([{
-        ...wallet,
-        user_id: user?.id,
-      }])
-      .select()
-      .single()
-    
-    if (error) throw error
-    setWallets(prev => [...prev, data])
-    return data
+    try {
+      const { data, error } = await supabase
+        .from('wallets')
+        .insert([{
+          ...wallet,
+          user_id: user?.id,
+        }])
+        .select()
+        .single()
+      
+      if (error) throw error
+      setWallets(prev => [...prev, data])
+      return data
+    } catch (err) {
+      // If interest_payout_date column does not exist yet in Supabase, retry without it
+      if (err.message && err.message.includes('interest_payout_date')) {
+        const { interest_payout_date, ...rest } = wallet
+        const { data, error } = await supabase
+          .from('wallets')
+          .insert([{
+            ...rest,
+            user_id: user?.id,
+          }])
+          .select()
+          .single()
+        if (error) throw error
+        setWallets(prev => [...prev, data])
+        return data
+      }
+      throw err
+    }
   }
 
   const updateWallet = async (id, updates) => {
@@ -82,16 +102,32 @@ export function useWallets() {
       return updated.find(w => w.id === id)
     }
 
-    const { data, error } = await supabase
-      .from('wallets')
-      .update(updates)
-      .eq('id', id)
-      .select()
-      .single()
-    
-    if (error) throw error
-    setWallets(prev => prev.map(w => w.id === id ? data : w))
-    return data
+    try {
+      const { data, error } = await supabase
+        .from('wallets')
+        .update(updates)
+        .eq('id', id)
+        .select()
+        .single()
+      
+      if (error) throw error
+      setWallets(prev => prev.map(w => w.id === id ? data : w))
+      return data
+    } catch (err) {
+      if (err.message && err.message.includes('interest_payout_date')) {
+        const { interest_payout_date, ...rest } = updates
+        const { data, error } = await supabase
+          .from('wallets')
+          .update(rest)
+          .eq('id', id)
+          .select()
+          .single()
+        if (error) throw error
+        setWallets(prev => prev.map(w => w.id === id ? data : w))
+        return data
+      }
+      throw err
+    }
   }
 
   const deleteWallet = async (id) => {
