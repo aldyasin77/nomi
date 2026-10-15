@@ -353,7 +353,7 @@ export default function TransactionsPage() {
         title="Recent Transaction"
       />
 
-      {/* 6. Floating Action Button (FAB) at bottom-right corner (above bottom nav) */}
+      {/* 6. Floating Action Button (FAB) at bottom-right corner (above bottom nav)
       <button
         type="button"
         onClick={() => setShowModal(true)}
@@ -361,7 +361,7 @@ export default function TransactionsPage() {
         aria-label="Add Transaction"
       >
         <Plus size={24} strokeWidth={2.8} />
-      </button>
+      </button> */}
 
       {/* Transaction Modal Bottom Sheet */}
       <TransactionModal

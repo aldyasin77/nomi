@@ -166,6 +166,8 @@ export default function CategoryFormModal({ isOpen, onClose, onSubmit, editingCa
               }}
               placeholder="Rp 0"
               customInput={Input}
+              inputMode="numeric"
+              pattern="[0-9]*"
               className="h-11 px-4 rounded-xl border-slate-200 bg-white text-sm text-slate-900 placeholder:text-slate-400 focus-visible:ring-[#1A2C4C]/20 focus-visible:border-[#1A2C4C]"
             />
             <p className="text-[11px] text-slate-400 mt-1">

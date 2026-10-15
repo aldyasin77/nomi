@@ -4,20 +4,25 @@ import {
   LayoutDashboard,
   Wallet,
   ArrowLeftRight,
+  CalendarClock,
   Settings,
   LogOut,
 } from 'lucide-react'
 import logoSvg from '@/assets/logo.svg'
 
+import { useNotifications } from '@/hooks/useNotifications'
+
 const navItems = [
   { to: '/', icon: LayoutDashboard, label: 'Dashboard' },
   { to: '/wallets', icon: Wallet, label: 'Wallets' },
   { to: '/transactions', icon: ArrowLeftRight, label: 'Transactions' },
+  { to: '/recurring', icon: CalendarClock, label: 'Langganan / Rutin' },
   { to: '/settings', icon: Settings, label: 'Settings' },
 ]
 
 export default function Sidebar() {
   const { signOut, user } = useAuth()
+  const { notifications } = useNotifications()
   const navigate = useNavigate()
 
   const handleSignOut = async () => {
@@ -60,8 +65,21 @@ export default function Sidebar() {
               }
             `}
           >
-            <Icon size={18} />
-            <span>{label}</span>
+            {({ isActive }) => (
+              <>
+                <Icon size={18} />
+                <span className="flex-1">{label}</span>
+                {to === '/recurring' && notifications.length > 0 && (
+                  <span
+                    className={`text-[10px] font-extrabold px-1.5 py-0.5 rounded-full ${
+                      isActive ? 'bg-white/20 text-white' : 'bg-indigo-50 text-indigo-700'
+                    }`}
+                  >
+                    {notifications.length}
+                  </span>
+                )}
+              </>
+            )}
           </NavLink>
         ))}
       </nav>

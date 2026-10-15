@@ -230,24 +230,39 @@ AFTER INSERT ON auth.users
 FOR EACH ROW EXECUTE FUNCTION public.handle_new_user_default_categories();
 
 -- ============================================================
--- 6. Helper: Seed existing users if any already signed up
+-- 7. Recurring Transactions (Subscriptions & Auto-debits)
 -- ============================================================
-DO $$
-DECLARE
-    u RECORD;
-BEGIN
-    FOR u IN SELECT id FROM auth.users LOOP
-        IF NOT EXISTS (SELECT 1 FROM public.categories WHERE user_id = u.id) THEN
-            INSERT INTO public.categories (user_id, name, type, monthly_limit) VALUES
-                (u.id, 'Food & Dining', 'expense', 3000000.00),
-                (u.id, 'Transportation', 'expense', 1000000.00),
-                (u.id, 'Housing & Utilities', 'expense', 2500000.00),
-                (u.id, 'Entertainment & Leisure', 'expense', 1000000.00),
-                (u.id, 'Shopping & Groceries', 'expense', 2000000.00),
-                (u.id, 'Salary / Income', 'income', 0.00),
-                (u.id, 'Savings Interest', 'income', 0.00),
-                (u.id, 'Investment / Dividend', 'income', 0.00);
-        END IF;
-    END LOOP;
-END;
-$$;
+CREATE TABLE IF NOT EXISTS public.recurring_transactions (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE DEFAULT auth.uid(),
+    type TEXT NOT NULL CHECK (type IN ('income', 'expense', 'transfer')),
+    amount NUMERIC(15, 2) NOT NULL CHECK (amount > 0),
+    execution_day NUMERIC(2, 0) NOT NULL CHECK (execution_day >= 1 AND execution_day <= 31),
+    wallet_id UUID REFERENCES public.wallets(id) ON DELETE CASCADE,
+    to_wallet_id UUID REFERENCES public.wallets(id) ON DELETE SET NULL,
+    category_id UUID REFERENCES public.categories(id) ON DELETE SET NULL,
+    note TEXT,
+    is_active BOOLEAN NOT NULL DEFAULT TRUE,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+ALTER TABLE public.recurring_transactions ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Users can view own recurring transactions"
+    ON public.recurring_transactions FOR SELECT
+    USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can insert own recurring transactions"
+    ON public.recurring_transactions FOR INSERT
+    WITH CHECK (auth.uid() = user_id);
+
+CREATE POLICY "Users can update own recurring transactions"
+    ON public.recurring_transactions FOR UPDATE
+    USING (auth.uid() = user_id)
+    WITH CHECK (auth.uid() = user_id);
+
+CREATE POLICY "Users can delete own recurring transactions"
+    ON public.recurring_transactions FOR DELETE
+    USING (auth.uid() = user_id);
+

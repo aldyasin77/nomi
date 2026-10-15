@@ -131,6 +131,8 @@ export default function WalletFormModal({ isOpen, onClose, onSubmit, editingWall
               }}
               placeholder="Rp 0"
               customInput={Input}
+              inputMode="numeric"
+              pattern="[0-9]*"
               className="h-11 px-4 rounded-xl border-slate-200 bg-white text-sm text-slate-900 placeholder:text-slate-400 focus-visible:ring-[#1A2C4C]/20 focus-visible:border-[#1A2C4C]"
             />
           </div>
@@ -148,6 +150,7 @@ export default function WalletFormModal({ isOpen, onClose, onSubmit, editingWall
               step="0.01"
               min="0"
               max="100"
+              inputMode="decimal"
               value={form.annual_interest_rate}
               onChange={(e) => handleChange('annual_interest_rate', e.target.value)}
               placeholder="Contoh: 4.5"
@@ -170,7 +173,11 @@ export default function WalletFormModal({ isOpen, onClose, onSubmit, editingWall
               <SelectTrigger className="h-11 w-full rounded-xl border-slate-200 bg-white text-xs sm:text-sm focus:ring-[#1A2C4C]/20 focus:border-[#1A2C4C]">
                 <SelectValue placeholder="Pilih tanggal (1-31)..." />
               </SelectTrigger>
-              <SelectContent className="rounded-xl bg-white shadow-xl border-slate-200 max-h-56 z-70">
+              <SelectContent
+                position="popper"
+                sideOffset={4}
+                className="w-(--radix-select-trigger-width) min-w-(--radix-select-trigger-width) rounded-xl bg-white shadow-xl border-slate-200 max-h-56 z-[9999]"
+              >
                 {Array.from({ length: 31 }, (_, i) => i + 1).map((day) => (
                   <SelectItem key={day} value={day.toString()} className="cursor-pointer text-xs">
                     Tanggal {day} tiap bulan

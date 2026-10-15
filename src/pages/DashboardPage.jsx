@@ -1,16 +1,14 @@
 import { useState, useMemo } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 import {
   Plus,
   ArrowLeftRight,
   CreditCard,
   Target,
-  Bell,
   Eye,
   EyeOff,
-  QrCode,
-  Send,
   TrendingUp,
+  Nfc,
 } from 'lucide-react'
 import { useAuth } from '@/context/AuthContext'
 import { useWallets } from '@/hooks/useWallets'
@@ -23,7 +21,9 @@ import MonthlyTrendChart from '@/components/dashboard/MonthlyTrendChart'
 import BudgetSection from '@/components/dashboard/BudgetSection'
 import RecentTransactions from '@/components/dashboard/RecentTransactions'
 import TransactionModal from '@/components/transactions/TransactionModal'
-import GlassCard from '@/components/ui/GlassCard'
+import { Shader, Godrays } from '@/components/shaders'
+import NotificationBell from '@/components/notifications/NotificationBell'
+import RecurringNotificationBanner from '@/components/notifications/RecurringNotificationBanner'
 import Button from '@/components/ui/Button'
 import toast from 'react-hot-toast'
 import logoSvg from '@/assets/logo.svg'
@@ -121,85 +121,78 @@ export default function DashboardPage() {
               </h1>
             </div>
           </div>
-          <button
-            type="button"
-            onClick={() => toast('No new notifications', { icon: '🔔' })}
-            className="w-10 h-10 rounded-full bg-white/80 backdrop-blur-md border border-slate-200/60 shadow-xs flex items-center justify-center text-slate-700 hover:text-slate-900 transition-colors cursor-pointer relative"
-            aria-label="Notifications"
-          >
-            <Bell size={18} />
-            <span className="absolute top-2.5 right-2.5 w-2 h-2 rounded-full bg-rose-500 ring-2 ring-white" />
-          </button>
+          <NotificationBell />
         </div>
 
-        {/* b. Main Wallet Card (GlassCard with Aurora & Dark Liquid Glass Overlay) */}
-        <div className="relative">
-          <GlassCard
-            glow={true}
-            className="p-5 aurora-gradient text-white overflow-hidden rounded-3xl shadow-xl border border-white/20"
-          >
-            {/* Top row of Card */}
-            <div className="flex items-start justify-between">
+        {/* Recurring Notification Alert Banner (Mobile) */}
+        <RecurringNotificationBanner />
+
+        {/* b. Main Wallet Card (Godrays Shader Background & Contactless NFC) */}
+        <div className="relative overflow-hidden isolate rounded-2xl p-5 text-white shadow-2xl bg-[#0F172A] border border-white/10">
+          {/* Godrays Shader Canvas */}
+          <div className="absolute inset-0 -z-10 w-full h-full overflow-hidden rounded-2xl pointer-events-none">
+            <Shader>
+              <Godrays
+                rayColor="#0284C7" // Warna sinar biru brand
+                backgroundColor="#0F172A" // Background gelap navy
+                intensity={0.9}
+                density={0.5}
+                speed={0.4}
+                spotty={0.8}
+                center={{ x: 0.5, y: -0.2 }} // Sinar memancar dari area tengah atas kartu
+              />
+            </Shader>
+          </div>
+
+          {/* Thin overlay gradient for high contrast & readability */}
+          <div className="absolute inset-0 bg-gradient-to-b from-transparent via-black/10 to-black/30 pointer-events-none -z-5" />
+
+          {/* Top row of Card */}
+          <div className="flex items-start justify-between relative z-10">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-white/10 border border-white/15 backdrop-blur-sm flex items-center justify-center text-white/90 shadow-inner">
+                <Nfc size={20} className="rotate-90" />
+              </div>
               <div>
-                <p className="text-sm font-semibold tracking-wide text-white/95">
-                  {mainWallet ? mainWallet.name : greetingName}
+                <p className="text-sm font-bold tracking-wide text-white drop-shadow-xs">
+                  {mainWallet ? mainWallet.name : 'Nomi Card'}
                 </p>
-                <p className="text-[11px] text-white/60 font-mono tracking-wider mt-0.5">
-                  {mainWallet ? `${mainWallet.type.toUpperCase()} • 2026` : '0144-510-2008'}
+                <p className="text-[11px] text-white/60 font-mono tracking-widest mt-0.5">
+                  {mainWallet ? `${mainWallet.type.toUpperCase()} •••• 4829` : '•••• 4829'}
                 </p>
-              </div>
-              <div className="text-right">
-                <span className="text-base font-black italic tracking-widest text-white/90">
-                  VISA
-                </span>
               </div>
             </div>
-
-            {/* Dark Liquid Glass Overlay Box */}
-            <div className="mt-4 rounded-2xl bg-black/25 backdrop-blur-md border border-white/10 p-4">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <span className="text-xs font-medium text-white/70">Total Balance</span>
-                  <button
-                    type="button"
-                    onClick={() => setShowBalance(!showBalance)}
-                    className="text-white/60 hover:text-white transition-colors cursor-pointer p-0.5"
-                    aria-label={showBalance ? 'Hide balance' : 'Show balance'}
-                  >
-                    {showBalance ? <Eye size={14} /> : <EyeOff size={14} />}
-                  </button>
-                </div>
-                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 text-[10px] font-semibold">
-                  <TrendingUp size={10} />
-                  <span>+3.4% this month</span>
-                </span>
-              </div>
-
-              <p className="text-3xl font-extrabold tracking-tight mt-1">
-                {showBalance ? formatCurrency(mainWallet ? mainWallet.balance : totalBalance) : 'Rp ••••••••'}
-              </p>
-
-              {/* Action Buttons inside the card overlay */}
-              <div className="grid grid-cols-2 gap-2 mt-4 pt-3 border-t border-white/10">
-                <button
-                  type="button"
-                  onClick={() => toast('QR Pay feature coming soon', { icon: '📲' })}
-                  className="py-2 px-3 rounded-xl bg-white/10 hover:bg-white/20 text-xs font-semibold text-white flex items-center justify-center gap-1.5 backdrop-blur-sm transition-all cursor-pointer"
-                >
-                  <QrCode size={14} />
-                  <span>QR Pay</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => openAddModal('transfer')}
-                  className="py-2 px-3 rounded-xl bg-white/15 hover:bg-white/25 text-xs font-semibold text-white flex items-center justify-center gap-1.5 backdrop-blur-sm transition-all cursor-pointer"
-                >
-                  <Send size={14} />
-                  <span>Transfer</span>
-                </button>
-              </div>
+            <div className="text-right">
+              <span className="text-base font-black italic tracking-widest text-white/90 drop-shadow-xs">
+                VISA
+              </span>
             </div>
-          </GlassCard>
+          </div>
+
+          {/* Dark Liquid Glass Overlay Box */}
+          <div className="mt-4 rounded-xl bg-black/25 backdrop-blur-md border border-white/10 p-4 relative z-10">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-semibold text-white/80">Total Balance</span>
+                <button
+                  type="button"
+                  onClick={() => setShowBalance(!showBalance)}
+                  className="text-white/70 hover:text-white transition-colors cursor-pointer p-0.5"
+                  aria-label={showBalance ? 'Hide balance' : 'Show balance'}
+                >
+                  {showBalance ? <Eye size={14} /> : <EyeOff size={14} />}
+                </button>
+              </div>
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 text-[10px] font-semibold border border-emerald-400/20">
+                <TrendingUp size={10} />
+                <span>+3.4% this month</span>
+              </span>
+            </div>
+
+            <p className="text-3xl font-extrabold tracking-tight mt-1 text-white drop-shadow-sm">
+              {showBalance ? formatCurrency(mainWallet ? mainWallet.balance : totalBalance) : 'Rp ••••••••'}
+            </p>
+          </div>
         </div>
 
         {/* c. Quick Actions Section */}
@@ -281,10 +274,16 @@ export default function DashboardPage() {
               Overview of your finances & spending limits
             </p>
           </div>
-          <Button icon={Plus} onClick={() => openAddModal('expense')}>
-            Add Transaction
-          </Button>
+          <div className="flex items-center gap-3">
+            <NotificationBell />
+            <Button icon={Plus} onClick={() => openAddModal('expense')}>
+              Add Transaction
+            </Button>
+          </div>
         </div>
+
+        {/* Recurring Notification Alert Banner (Desktop) */}
+        <RecurringNotificationBanner />
 
         {/* KPI Cards */}
         <KPICards

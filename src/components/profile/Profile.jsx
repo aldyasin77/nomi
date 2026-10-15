@@ -4,26 +4,28 @@ import {
   Wallet,
   Tag,
   UserCheck,
+  CalendarClock,
   ChevronRight,
   LogOut,
-  Shield,
-  Bell,
-  Sparkles,
   Camera,
-  Check,
+  KeyRound,
 } from 'lucide-react'
 import { useAuth } from '@/context/AuthContext'
+import { useNotifications } from '@/hooks/useNotifications'
 import { supabase } from '@/lib/supabase'
 import Modal from '@/components/ui/Modal'
 import { Input } from '@/components/ui/input'
 import Button from '@/components/ui/Button'
+import ChangePasswordModal from './ChangePasswordModal'
 import toast from 'react-hot-toast'
 
 export default function Profile({ onOpenCategoryConfig }) {
   const { user, signOut } = useAuth()
+  const { notifications } = useNotifications()
   const navigate = useNavigate()
 
   const [editProfileOpen, setEditProfileOpen] = useState(false)
+  const [changePasswordOpen, setChangePasswordOpen] = useState(false)
   const [fullName, setFullName] = useState(
     user?.user_metadata?.full_name || user?.email?.split('@')[0] || ''
   )
@@ -117,11 +119,6 @@ export default function Profile({ onOpenCategoryConfig }) {
           <p className="text-xs text-slate-400 font-medium mt-0.5">
             {email}
           </p>
-
-          <span className="inline-flex items-center gap-1.5 px-3 py-1 mt-3 rounded-full bg-indigo-50 border border-indigo-100 text-indigo-700 text-[11px] font-semibold">
-            <Sparkles size={11} />
-            <span>Nomi Personal Account</span>
-          </span>
         </div>
       </div>
 
@@ -181,7 +178,38 @@ export default function Profile({ onOpenCategoryConfig }) {
               </button>
             </li>
 
-            {/* Menu 3: Edit Profil */}
+            {/* Menu 3: Langganan & Transaksi Rutin */}
+            <li>
+              <button
+                type="button"
+                onClick={() => navigate('/recurring')}
+                className="w-full flex items-center justify-between px-5 py-4 hover:bg-slate-50 transition-colors text-left cursor-pointer group"
+              >
+                <div className="flex items-center gap-3.5">
+                  <div className="w-10 h-10 rounded-2xl bg-amber-50 border border-amber-100/60 flex items-center justify-center text-amber-600 group-hover:scale-105 transition-transform">
+                    <CalendarClock size={19} />
+                  </div>
+                  <div>
+                    <p className="font-semibold text-slate-800">
+                      Langganan & Transaksi Rutin
+                    </p>
+                    <p className="text-xs text-slate-400">
+                      Tagihan bulanan, langganan, & jadwal otomatis
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  {notifications.length > 0 && (
+                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-100 text-amber-800">
+                      {notifications.length} aktif
+                    </span>
+                  )}
+                  <ChevronRight size={18} className="text-slate-300 group-hover:text-slate-600 transition-colors" />
+                </div>
+              </button>
+            </li>
+
+            {/* Menu 4: Edit Profil */}
             <li>
               <button
                 type="button"
@@ -198,6 +226,30 @@ export default function Profile({ onOpenCategoryConfig }) {
                     </p>
                     <p className="text-xs text-slate-400">
                       Ubah nama lengkap dan informasi akun
+                    </p>
+                  </div>
+                </div>
+                <ChevronRight size={18} className="text-slate-300 group-hover:text-slate-600 transition-colors" />
+              </button>
+            </li>
+
+            {/* Menu 5: Ubah Kata Sandi */}
+            <li>
+              <button
+                type="button"
+                onClick={() => setChangePasswordOpen(true)}
+                className="w-full flex items-center justify-between px-5 py-4 hover:bg-slate-50 transition-colors text-left cursor-pointer group"
+              >
+                <div className="flex items-center gap-3.5">
+                  <div className="w-10 h-10 rounded-2xl bg-slate-100 border border-slate-200/80 flex items-center justify-center text-slate-700 group-hover:scale-105 transition-transform">
+                    <KeyRound size={19} />
+                  </div>
+                  <div>
+                    <p className="font-semibold text-slate-800">
+                      Ubah Kata Sandi
+                    </p>
+                    <p className="text-xs text-slate-400">
+                      Ganti kata sandi login akun Anda
                     </p>
                   </div>
                 </div>
@@ -276,6 +328,12 @@ export default function Profile({ onOpenCategoryConfig }) {
           </div>
         </form>
       </Modal>
+
+      {/* 5. Change Password Responsive Modal */}
+      <ChangePasswordModal
+        isOpen={changePasswordOpen}
+        onClose={() => setChangePasswordOpen(false)}
+      />
     </div>
   )
 }

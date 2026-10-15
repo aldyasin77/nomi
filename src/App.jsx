@@ -9,6 +9,7 @@ import RegisterPage from './pages/RegisterPage'
 import DashboardPage from './pages/DashboardPage'
 import WalletsPage from './pages/WalletsPage'
 import TransactionsPage from './pages/TransactionsPage'
+import RecurringPage from './pages/RecurringPage'
 import SettingsPage from './pages/SettingsPage'
 
 function AppLayout() {
@@ -67,6 +68,7 @@ export default function App() {
             <Route path="/" element={<DashboardPage />} />
             <Route path="/wallets" element={<WalletsPage />} />
             <Route path="/transactions" element={<TransactionsPage />} />
+            <Route path="/recurring" element={<RecurringPage />} />
             <Route path="/settings" element={<SettingsPage />} />
           </Route>
         </Routes>

@@ -131,7 +131,7 @@ export default function TransactionForm({
     : 'Pilih Tanggal'
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
+    <form onSubmit={handleSubmit} noValidate className="space-y-4">
       {/* Type Segmented Control */}
       <SegmentedControl
         options={TRANSACTION_TYPES}
@@ -156,6 +156,8 @@ export default function TransactionForm({
           placeholder="Rp 0"
           required
           customInput={Input}
+          inputMode="numeric"
+          pattern="[0-9]*"
           className="h-13 text-2xl font-bold text-center border-slate-200 rounded-2xl bg-slate-50/70 shadow-inner focus-visible:ring-[#1A2C4C]/20 focus-visible:border-[#1A2C4C]"
         />
       </div>
@@ -181,7 +183,7 @@ export default function TransactionForm({
             </button>
           </PopoverTrigger>
           <PopoverContent
-            className="w-auto p-2 bg-white shadow-2xl rounded-2xl border border-slate-200 z-70"
+            className="w-auto p-2 bg-white shadow-2xl rounded-2xl border border-slate-200 z-[9999]"
             align="center"
             sideOffset={6}
           >
@@ -207,7 +209,11 @@ export default function TransactionForm({
           <SelectTrigger className="h-11 w-full rounded-xl border-slate-200 bg-white text-sm focus:ring-[#1A2C4C]/20 focus:border-[#1A2C4C]">
             <SelectValue placeholder="Pilih dompet..." />
           </SelectTrigger>
-          <SelectContent className="rounded-xl bg-white shadow-xl border-slate-200 z-70">
+          <SelectContent
+            position="popper"
+            sideOffset={4}
+            className="w-(--radix-select-trigger-width) min-w-(--radix-select-trigger-width) rounded-xl bg-white shadow-xl border-slate-200 z-[9999]"
+          >
             {wallets.map(w => (
               <SelectItem key={w.id} value={w.id} className="cursor-pointer">
                 {w.name} ({new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(w.balance)})
@@ -230,7 +236,11 @@ export default function TransactionForm({
             <SelectTrigger className="h-11 w-full rounded-xl border-slate-200 bg-white text-sm focus:ring-[#1A2C4C]/20 focus:border-[#1A2C4C]">
               <SelectValue placeholder="Pilih dompet tujuan..." />
             </SelectTrigger>
-            <SelectContent className="rounded-xl bg-white shadow-xl border-slate-200 z-70">
+            <SelectContent
+              position="popper"
+              sideOffset={4}
+              className="w-(--radix-select-trigger-width) min-w-(--radix-select-trigger-width) rounded-xl bg-white shadow-xl border-slate-200 z-[9999]"
+            >
               {wallets
                 .filter(w => w.id !== form.wallet_id)
                 .map(w => (
@@ -256,7 +266,11 @@ export default function TransactionForm({
             <SelectTrigger className="h-11 w-full rounded-xl border-slate-200 bg-white text-sm focus:ring-[#1A2C4C]/20 focus:border-[#1A2C4C]">
               <SelectValue placeholder="Pilih kategori..." />
             </SelectTrigger>
-            <SelectContent className="rounded-xl bg-white shadow-xl border-slate-200 z-70">
+            <SelectContent
+              position="popper"
+              sideOffset={4}
+              className="w-(--radix-select-trigger-width) min-w-(--radix-select-trigger-width) rounded-xl bg-white shadow-xl border-slate-200 z-[9999]"
+            >
               {filteredCategories.map(c => {
                 const { emoji, name: cleanName } = extractCategoryEmojiAndName(c.name, c.type)
                 return (
