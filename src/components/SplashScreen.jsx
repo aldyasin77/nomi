@@ -1,0 +1,141 @@
+import { useEffect, useState } from 'react'
+import { motion } from 'framer-motion'
+
+const LOGO_PATHS = [
+  {
+    d: 'M0.27775 402.258C-0.131882 389.198 0.210402 374.251 0.207341 361.034L0.197549 280.653L0.180396 236.967C0.182845 225.102 -0.363311 213.011 1.77731 201.347C7.45398 170.417 35.8472 146.005 66.9149 143.339C87.4718 141.574 108.005 153.912 123.084 166.596C130.522 171.745 139.248 179.552 146.176 185.552L180.754 215.767C212.76 243.524 244.409 271.69 275.693 300.258C292.286 315.436 308.708 331.395 325.228 346.384C325.81 303.357 325.296 259.158 325.302 216.037C325.305 177.677 356.397 146.579 394.756 146.568L422.475 146.56C436.956 146.557 467.92 145.413 480.472 148.385C492.871 151.349 504.211 157.704 513.212 166.737C532.861 186.433 533.614 204.886 533.571 230.3L533.498 262.365L533.534 272.492C544.042 273.989 552.51 282.362 553.428 293.048C553.943 300.04 553.679 309.315 553.685 316.443V356.357C553.685 364.39 553.869 372.607 553.685 380.625C553.392 393.684 556.392 408.651 543.497 416.941C540.925 419.28 536.865 420.186 533.553 421.056L533.565 460.121C533.59 492.365 532.561 511.922 509.336 537.357C479.529 569.993 441.26 565.633 401.228 565.315C381.028 565.156 353.394 567.427 334.584 562.088C323.685 559.008 313.552 553.681 304.839 546.444C295.501 538.79 274.328 514.304 265.07 504.152L193.889 425.967C181.742 412.551 165.218 393.11 152.589 381.036L152.528 565.333L109.163 565.37C75.8545 565.37 52.6855 565.021 26.5095 539.806C7.50723 521.504 -0.68294 497.171 0.163877 471.295C0.891295 449.075 -0.580089 424.442 0.27775 402.258Z',
+    fill: '#0C397F',
+    stroke: '#0C397F',
+  },
+  {
+    d: 'M0.27775 402.258C1.39949 398.627 0.479831 394 1.44727 389.986C2.40002 386.033 4.052 382.632 5.48847 378.926C11.3152 363.894 19.1263 353.027 32.5627 343.7C48.1183 332.889 67.3117 328.654 85.9723 331.914C110.348 336.403 125.659 350.016 140.889 368.207C144.624 372.668 149.028 375.841 152.589 381.036L152.528 565.333L109.163 565.37C75.8545 565.37 52.6855 565.021 26.5095 539.806C7.50723 521.504 -0.68294 497.171 0.163877 471.295C0.891295 449.075 -0.580089 424.442 0.27775 402.258Z',
+    fill: '#082353',
+    stroke: '#082353',
+  },
+  {
+    d: 'M533.535 272.492C544.042 273.989 552.51 282.362 553.428 293.048C553.943 300.04 553.679 309.315 553.685 316.443V356.357C553.685 364.39 553.869 372.607 553.685 380.625C553.392 393.684 556.392 408.65 543.497 416.941L543.252 415.937C539.927 417.706 537.919 419.366 533.89 419.525C507.597 420.578 481.256 420.75 454.933 420.646C450.053 420.627 445.014 420.792 440.219 420.45C422.971 419.262 406.934 411.155 395.748 397.969C387.506 388.226 378.928 369.814 379.956 356.826C380.654 329.328 378.358 313.677 399.66 291.753C422.603 268.142 447.628 272.472 477.729 272.478L533.535 272.492Z',
+    fill: '#0D4294',
+    stroke: '#0D4294',
+  },
+  {
+    d: 'M458.197 321.989C472.029 319.054 485.604 327.972 488.396 341.836C491.194 355.7 482.144 369.183 468.251 371.841C454.554 374.463 441.303 365.564 438.542 351.894C435.786 338.223 444.555 324.882 458.197 321.989Z',
+    fill: '#FFFFFF',
+    stroke: '#94A3B8',
+  },
+  {
+    d: 'M462 123.501H190.281C205.668 119.365 223.34 114.787 233.603 112.442L327.745 90.9617L405.851 73.0041C409.039 72.2684 412.695 71.385 416.567 70.4495C427.357 67.8422 439.822 64.8303 448.51 63.4833C455.386 62.8337 462.569 64.2897 468.33 68.2036C472.941 71.3845 476.609 75.7496 478.948 80.8391C481.749 86.8674 485.01 106.495 487.425 121.031C487.888 123.817 488.319 126.417 488.711 128.697C480.466 125.347 471.448 123.501 462 123.501Z',
+    fill: '#094DB8',
+    stroke: '#094DB8',
+  },
+  {
+    d: 'M428.5 51.5011C428.5 51.5011 217.382 105.228 138.431 123.501H71C59.1709 123.501 48.0173 126.394 38.2083 131.511C78.4954 108.41 158.464 79.8556 248.264 47.791C290.859 32.5818 335.667 16.5827 379.5 0.0011072C408.148 -0.125724 419.132 10.6065 428.5 51.5011Z',
+    fill: '#3175E0',
+    stroke: '#3175E0',
+    fillRule: 'evenodd',
+    clipRule: 'evenodd',
+  },
+]
+
+export default function SplashScreen({
+  duration = 2700,
+  fadeDuration = 650,
+  onFinish,
+  isOverlay = true,
+}) {
+  const [isFading, setIsFading] = useState(false)
+  const [isRendered, setIsRendered] = useState(true)
+
+  useEffect(() => {
+    if (duration <= 0) return
+
+    // Trigger smooth fade-out after line drawing and fill animation complete
+    const fadeTimer = setTimeout(() => {
+      setIsFading(true)
+    }, duration)
+
+    // Complete exit transition and invoke onFinish callback
+    const finishTimer = setTimeout(() => {
+      setIsRendered(false)
+      if (onFinish) onFinish()
+    }, duration + fadeDuration)
+
+    return () => {
+      clearTimeout(fadeTimer)
+      clearTimeout(finishTimer)
+    }
+  }, [duration, fadeDuration, onFinish])
+
+  if (!isRendered) return null
+
+  return (
+    <div
+      className={`
+        ${isOverlay ? 'fixed inset-0 z-50' : 'w-full'}
+        bg-white h-[100dvh] flex flex-col justify-center items-center select-none overflow-hidden
+        transition-opacity ease-out
+        ${isFading ? 'opacity-0 pointer-events-none' : 'opacity-100'}
+      `}
+      style={{
+        transitionDuration: `${fadeDuration}ms`,
+      }}
+      aria-hidden={isFading}
+    >
+      <div className="flex flex-col justify-center items-center">
+        {/* Animated Line Drawing SVG Logo */}
+        <div className="w-28 h-28 sm:w-32 sm:h-32 flex items-center justify-center p-1">
+          <motion.svg
+            width="100%"
+            height="100%"
+            viewBox="0 0 554 566"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+            className="w-full h-full object-contain"
+          >
+            {LOGO_PATHS.map((item, index) => (
+              <motion.path
+                key={index}
+                d={item.d}
+                fillRule={item.fillRule}
+                clipRule={item.clipRule}
+                vectorEffect="non-scaling-stroke"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                initial={{
+                  pathLength: 0,
+                  fill: 'rgba(255, 255, 255, 0)',
+                  stroke: item.stroke || '#0284C7',
+                  strokeWidth: 2,
+                }}
+                animate={{
+                  pathLength: 1,
+                  fill: item.fill,
+                  stroke: item.fill,
+                }}
+                transition={{
+                  pathLength: { duration: 1.5, ease: 'easeInOut' },
+                  fill: { duration: 0.8, ease: 'easeIn', delay: 1.2 },
+                  stroke: { duration: 0.8, ease: 'easeIn', delay: 1.2 },
+                }}
+              />
+            ))}
+          </motion.svg>
+        </div>
+
+        {/* Teks Pendukung: Muncul persis setelah logo selesai terisi warna */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 1.8, duration: 0.6, ease: 'easeOut' }}
+          className="mt-5 text-center"
+        >
+          <h1 className="text-3xl font-extrabold tracking-tight text-[#0F172A]">
+            Nomi
+          </h1>
+          <p className="mt-1 text-xs font-semibold tracking-wider text-[#1E293B]/65 uppercase">
+            Finance Tracker
+          </p>
+        </motion.div>
+      </div>
+    </div>
+  )
+}

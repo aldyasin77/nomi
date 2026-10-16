@@ -1,9 +1,11 @@
+import { useState } from 'react'
 import { BrowserRouter, Routes, Route, Outlet } from 'react-router-dom'
 import { Toaster } from 'react-hot-toast'
 import { AuthProvider } from './context/AuthContext'
 import ProtectedRoute from './components/layout/ProtectedRoute'
 import Sidebar from './components/layout/Sidebar'
 import BottomNav from './components/layout/BottomNav'
+import SplashScreen from './components/SplashScreen'
 import LoginPage from './pages/LoginPage'
 import RegisterPage from './pages/RegisterPage'
 import DashboardPage from './pages/DashboardPage'
@@ -28,9 +30,12 @@ function AppLayout() {
 }
 
 export default function App() {
+  const [showSplash, setShowSplash] = useState(true)
+
   return (
     <BrowserRouter>
       <AuthProvider>
+        {showSplash && <SplashScreen onFinish={() => setShowSplash(false)} />}
         <Toaster
           position="top-right"
           toastOptions={{
