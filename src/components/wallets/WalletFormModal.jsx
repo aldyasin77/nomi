@@ -9,6 +9,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import { Switch } from '@/components/ui/switch'
 import { NumericFormat } from 'react-number-format'
 import { THEME_OPTIONS, detectTheme } from '@/data/walletThemes'
 import { BANK_LOGOS, resolveBankLogo, detectBankLogo } from '@/data/bankLogos'
@@ -24,6 +25,7 @@ const WALLET_TYPES = [
 export default function WalletFormModal({ isOpen, onClose, onSubmit, editingWallet = null }) {
   const isEditing = !!editingWallet
   const [loading, setLoading] = useState(false)
+  const [isInterestEnabled, setIsInterestEnabled] = useState(false)
   const [form, setForm] = useState({
     name: '',
     type: 'cash',
@@ -36,6 +38,11 @@ export default function WalletFormModal({ isOpen, onClose, onSubmit, editingWall
 
   useEffect(() => {
     if (editingWallet) {
+      const hasInterest = Boolean(
+        (editingWallet.annual_interest_rate && parseFloat(editingWallet.annual_interest_rate) > 0) ||
+        editingWallet.interest_payout_date
+      )
+      setIsInterestEnabled(hasInterest)
       setForm({
         name: editingWallet.name || '',
         type: editingWallet.type || 'cash',
@@ -46,6 +53,7 @@ export default function WalletFormModal({ isOpen, onClose, onSubmit, editingWall
         bank_logo: resolveBankLogo(editingWallet.bank_logo) || '',
       })
     } else {
+      setIsInterestEnabled(false)
       setForm({
         name: '',
         type: 'cash',
@@ -89,6 +97,18 @@ export default function WalletFormModal({ isOpen, onClose, onSubmit, editingWall
     }))
   }
 
+  const handleInterestToggle = (checked) => {
+    setIsInterestEnabled(checked)
+    if (!checked) {
+      // Reset values when switch is turned off
+      setForm(prev => ({
+        ...prev,
+        annual_interest_rate: '',
+        interest_payout_date: '',
+      }))
+    }
+  }
+
   const handleSubmit = async (e) => {
     e.preventDefault()
     setLoading(true)
@@ -97,8 +117,8 @@ export default function WalletFormModal({ isOpen, onClose, onSubmit, editingWall
         name: form.name.trim(),
         type: form.type,
         balance: parseFloat(form.balance) || 0,
-        annual_interest_rate: form.annual_interest_rate ? parseFloat(form.annual_interest_rate) : 0,
-        interest_payout_date: form.interest_payout_date ? parseInt(form.interest_payout_date, 10) : null,
+        annual_interest_rate: isInterestEnabled && form.annual_interest_rate ? parseFloat(form.annual_interest_rate) : 0,
+        interest_payout_date: isInterestEnabled && form.interest_payout_date ? parseInt(form.interest_payout_date, 10) : null,
         card_theme: form.card_theme || 'aurora',
         bank_logo: form.bank_logo || null,
       })
@@ -253,57 +273,78 @@ export default function WalletFormModal({ isOpen, onClose, onSubmit, editingWall
           </div>
         )}
 
-        {/* Interest & Payout Date Fields (APR % and Payout Date 1-31) */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
-          {/* Bunga Tahunan / APR (%) */}
-          <div>
-            <label className="block text-xs font-semibold text-slate-700 mb-1">
-              Bunga Tahunan / APR (%)
-            </label>
-            <Input
-              type="number"
-              step="0.01"
-              min="0"
-              max="100"
-              inputMode="decimal"
-              value={form.annual_interest_rate}
-              onChange={(e) => handleChange('annual_interest_rate', e.target.value)}
-              placeholder="Contoh: 4.5"
-              className="h-11 px-4 rounded-xl border-slate-200 bg-white text-sm text-slate-900 placeholder:text-slate-400 focus-visible:ring-[#1A2C4C]/20 focus-visible:border-[#1A2C4C]"
+        {/* Toggle Aktifkan Bunga Simpanan (Switch) */}
+        <div className="pt-1">
+          <div className="flex items-center justify-between p-3.5 rounded-2xl bg-slate-50 border border-slate-200/80 transition-colors">
+            <div className="pr-3">
+              <label htmlFor="interest-switch" className="text-xs font-semibold text-slate-800 block cursor-pointer">
+                Aktifkan Bunga Simpanan
+              </label>
+              <p className="text-[11px] text-slate-400 mt-0.5 leading-tight">
+                Hitung dan catat bunga otomatis untuk kantong ini
+              </p>
+            </div>
+            <Switch
+              id="interest-switch"
+              checked={isInterestEnabled}
+              onCheckedChange={handleInterestToggle}
             />
-            <p className="text-[10px] text-slate-400 mt-1">
-              Persentase bunga per tahun
-            </p>
           </div>
 
-          {/* Tanggal Pencairan Bunga (1-31) */}
-          <div>
-            <label className="block text-xs font-semibold text-slate-700 mb-1">
-              Tanggal Pencairan Bunga
-            </label>
-            <Select
-              value={form.interest_payout_date}
-              onValueChange={(val) => handleChange('interest_payout_date', val)}
-            >
-              <SelectTrigger className="h-11 w-full rounded-xl border-slate-200 bg-white text-xs sm:text-sm focus:ring-[#1A2C4C]/20 focus:border-[#1A2C4C]">
-                <SelectValue placeholder="Pilih tanggal (1-31)..." />
-              </SelectTrigger>
-              <SelectContent
-                position="popper"
-                sideOffset={4}
-                className="w-(--radix-select-trigger-width) min-w-(--radix-select-trigger-width) rounded-xl !bg-white bg-white shadow-xl border-slate-200 max-h-56 z-[9999]"
-              >
-                {Array.from({ length: 31 }, (_, i) => i + 1).map((day) => (
-                  <SelectItem key={day} value={day.toString()} className="cursor-pointer text-xs">
-                    Tanggal {day} tiap bulan
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <p className="text-[10px] text-slate-400 mt-1">
-              Jadwal pencairan tiap bulan
-            </p>
-          </div>
+          {/* Conditional Rendering: Bunga Tahunan & Tanggal Pencairan */}
+          {isInterestEnabled && (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-3 animate-fade-in">
+              {/* Bunga Tahunan / APR (%) */}
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">
+                  Bunga Tahunan / APR (%)
+                </label>
+                <Input
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  max="100"
+                  inputMode="decimal"
+                  value={form.annual_interest_rate}
+                  onChange={(e) => handleChange('annual_interest_rate', e.target.value)}
+                  placeholder="Contoh: 4.5"
+                  className="h-11 px-4 rounded-xl border-slate-200 bg-white text-sm text-slate-900 placeholder:text-slate-400 focus-visible:ring-[#1A2C4C]/20 focus-visible:border-[#1A2C4C]"
+                />
+                <p className="text-[10px] text-slate-400 mt-1">
+                  Persentase bunga per tahun
+                </p>
+              </div>
+
+              {/* Tanggal Pencairan Bunga (1-31) */}
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">
+                  Tanggal Pencairan Bunga
+                </label>
+                <Select
+                  value={form.interest_payout_date}
+                  onValueChange={(val) => handleChange('interest_payout_date', val)}
+                >
+                  <SelectTrigger className="h-11 w-full rounded-xl border-slate-200 bg-white text-xs sm:text-sm focus:ring-[#1A2C4C]/20 focus:border-[#1A2C4C]">
+                    <SelectValue placeholder="Pilih tanggal (1-31)..." />
+                  </SelectTrigger>
+                  <SelectContent
+                    position="popper"
+                    sideOffset={4}
+                    className="w-(--radix-select-trigger-width) min-w-(--radix-select-trigger-width) rounded-xl !bg-white bg-white shadow-xl border-slate-200 max-h-56 z-[9999]"
+                  >
+                    {Array.from({ length: 31 }, (_, i) => i + 1).map((day) => (
+                      <SelectItem key={day} value={day.toString()} className="cursor-pointer text-xs">
+                        Tanggal {day} tiap bulan
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <p className="text-[10px] text-slate-400 mt-1">
+                  Jadwal pencairan tiap bulan
+                </p>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Actions */}
