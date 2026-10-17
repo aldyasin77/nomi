@@ -10,6 +10,9 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { NumericFormat } from 'react-number-format'
+import { THEME_OPTIONS, detectTheme } from '@/data/walletThemes'
+import { BANK_LOGOS, resolveBankLogo, detectBankLogo } from '@/data/bankLogos'
+import { Wallet } from 'lucide-react'
 
 const WALLET_TYPES = [
   { value: 'cash', label: 'Cash' },
@@ -27,6 +30,8 @@ export default function WalletFormModal({ isOpen, onClose, onSubmit, editingWall
     balance: '',
     annual_interest_rate: '',
     interest_payout_date: '',
+    card_theme: 'aurora',
+    bank_logo: '',
   })
 
   useEffect(() => {
@@ -37,6 +42,8 @@ export default function WalletFormModal({ isOpen, onClose, onSubmit, editingWall
         balance: editingWallet.balance?.toString() || '0',
         annual_interest_rate: editingWallet.annual_interest_rate ? editingWallet.annual_interest_rate.toString() : '',
         interest_payout_date: editingWallet.interest_payout_date ? editingWallet.interest_payout_date.toString() : '',
+        card_theme: editingWallet.card_theme || detectTheme(editingWallet.name || ''),
+        bank_logo: resolveBankLogo(editingWallet.bank_logo) || '',
       })
     } else {
       setForm({
@@ -45,12 +52,41 @@ export default function WalletFormModal({ isOpen, onClose, onSubmit, editingWall
         balance: '',
         annual_interest_rate: '',
         interest_payout_date: '',
+        card_theme: 'aurora',
+        bank_logo: '',
       })
     }
   }, [editingWallet, isOpen])
 
   const handleChange = (field, value) => {
-    setForm(prev => ({ ...prev, [field]: value }))
+    setForm(prev => {
+      const next = { ...prev, [field]: value }
+      // Auto-detect theme & bank logo when name changes (if user hasn't manually set them)
+      if (field === 'name') {
+        if (!prev._themeManuallySet) {
+          next.card_theme = detectTheme(value)
+        }
+        if (!prev._bankLogoManuallySet) {
+          const detected = detectBankLogo(value)
+          if (detected) {
+            next.bank_logo = detected
+          }
+        }
+      }
+      return next
+    })
+  }
+
+  const handleThemeChange = (value) => {
+    setForm(prev => ({ ...prev, card_theme: value, _themeManuallySet: true }))
+  }
+
+  const handleBankLogoChange = (value) => {
+    setForm(prev => ({
+      ...prev,
+      bank_logo: value === 'none' ? '' : value,
+      _bankLogoManuallySet: true,
+    }))
   }
 
   const handleSubmit = async (e) => {
@@ -63,6 +99,8 @@ export default function WalletFormModal({ isOpen, onClose, onSubmit, editingWall
         balance: parseFloat(form.balance) || 0,
         annual_interest_rate: form.annual_interest_rate ? parseFloat(form.annual_interest_rate) : 0,
         interest_payout_date: form.interest_payout_date ? parseInt(form.interest_payout_date, 10) : null,
+        card_theme: form.card_theme || 'aurora',
+        bank_logo: form.bank_logo || null,
       })
       onClose()
     } catch (err) {
@@ -71,6 +109,9 @@ export default function WalletFormModal({ isOpen, onClose, onSubmit, editingWall
       setLoading(false)
     }
   }
+
+  // Find selected theme data for preview
+  const selectedTheme = THEME_OPTIONS.find(t => t.value === form.card_theme)
 
   return (
     <Modal
@@ -116,6 +157,81 @@ export default function WalletFormModal({ isOpen, onClose, onSubmit, editingWall
           </div>
         </div>
 
+        {/* Pilih Bank / E-Wallet Dropdown */}
+        <div>
+          <label className="block text-xs font-semibold text-slate-700 mb-1">
+            Pilih Bank / E-Wallet
+          </label>
+          <Select
+            value={form.bank_logo || 'none'}
+            onValueChange={handleBankLogoChange}
+          >
+            <SelectTrigger className="h-11 w-full rounded-xl border-slate-200 bg-white text-xs sm:text-sm focus:ring-[#1A2C4C]/20 focus:border-[#1A2C4C]">
+              <SelectValue placeholder="Pilih bank atau e-wallet..." />
+            </SelectTrigger>
+            <SelectContent
+              position="popper"
+              sideOffset={4}
+              className="w-(--radix-select-trigger-width) min-w-(--radix-select-trigger-width) rounded-xl !bg-white bg-white shadow-2xl border border-slate-200 max-h-56 z-[9999]"
+            >
+              {BANK_LOGOS.map((opt) => (
+                <SelectItem key={opt.value} value={opt.value} className="cursor-pointer text-xs">
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-6 h-6 rounded-md bg-slate-50 border border-slate-100 flex items-center justify-center shrink-0 p-0.5">
+                      {opt.file ? (
+                        <img
+                          src={`/logos/${opt.file}`}
+                          alt={opt.label}
+                          className="h-4 w-auto max-w-[20px] object-contain"
+                        />
+                      ) : (
+                        <Wallet className="w-3.5 h-3.5 text-slate-400" />
+                      )}
+                    </div>
+                    <span>{opt.label}</span>
+                  </div>
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <p className="text-[10px] text-slate-400 mt-1">
+            Logo bank/e-wallet tersimpan ke kolom bank_logo dan muncul di pojok kiri atas kartu
+          </p>
+        </div>
+
+        {/* Card Theme Picker */}
+        <div>
+          <label className="block text-xs font-semibold text-slate-700 mb-1">Pilih Tema Kartu</label>
+          <Select
+            value={form.card_theme}
+            onValueChange={handleThemeChange}
+          >
+            <SelectTrigger className="h-11 w-full rounded-xl border-slate-200 bg-white text-xs sm:text-sm focus:ring-[#1A2C4C]/20 focus:border-[#1A2C4C]">
+              <SelectValue placeholder="Pilih tema kartu..." />
+            </SelectTrigger>
+            <SelectContent
+              position="popper"
+              sideOffset={4}
+              className="w-(--radix-select-trigger-width) min-w-(--radix-select-trigger-width) rounded-xl !bg-white bg-white shadow-2xl border border-slate-200 max-h-56 z-[9999]"
+            >
+              {THEME_OPTIONS.map((theme) => (
+                <SelectItem key={theme.value} value={theme.value} className="cursor-pointer text-xs">
+                  <div className="flex items-center gap-2.5">
+                    <span
+                      className="w-5 h-5 rounded-md shrink-0 shadow-sm"
+                      style={{ background: theme.gradient }}
+                    />
+                    <span>{theme.label}</span>
+                  </div>
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <p className="text-[10px] text-slate-400 mt-1">
+            Tema otomatis terdeteksi dari nama wallet. Bisa diganti manual.
+          </p>
+        </div>
+
         {/* Initial Balance */}
         {!isEditing && (
           <div>
@@ -132,7 +248,6 @@ export default function WalletFormModal({ isOpen, onClose, onSubmit, editingWall
               placeholder="Rp 0"
               customInput={Input}
               inputMode="numeric"
-              pattern="[0-9]*"
               className="h-11 px-4 rounded-xl border-slate-200 bg-white text-sm text-slate-900 placeholder:text-slate-400 focus-visible:ring-[#1A2C4C]/20 focus-visible:border-[#1A2C4C]"
             />
           </div>
@@ -176,7 +291,7 @@ export default function WalletFormModal({ isOpen, onClose, onSubmit, editingWall
               <SelectContent
                 position="popper"
                 sideOffset={4}
-                className="w-(--radix-select-trigger-width) min-w-(--radix-select-trigger-width) rounded-xl bg-white shadow-xl border-slate-200 max-h-56 z-[9999]"
+                className="w-(--radix-select-trigger-width) min-w-(--radix-select-trigger-width) rounded-xl !bg-white bg-white shadow-xl border-slate-200 max-h-56 z-[9999]"
               >
                 {Array.from({ length: 31 }, (_, i) => i + 1).map((day) => (
                   <SelectItem key={day} value={day.toString()} className="cursor-pointer text-xs">

@@ -142,7 +142,6 @@ export default function RecurringModal({
           required
           customInput={Input}
           inputMode="numeric"
-          pattern="[0-9]*"
           className="h-12 text-xl font-bold text-center border-slate-200 rounded-2xl bg-slate-50/70 shadow-inner focus-visible:ring-[#1A2C4C]/20 focus-visible:border-[#1A2C4C]"
         />
       </div>

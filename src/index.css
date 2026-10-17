@@ -76,6 +76,12 @@ body {
   border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
+/* ===== Dashboard Hero Section ===== */
+.dashboard-hero-section {
+  background: linear-gradient(165deg, #0C4A6E 0%, #0F3460 35%, #1A2C4C 65%, #0F172A 100%);
+  position: relative;
+}
+
 /* ===== Aurora Gradient ===== */
 .aurora-gradient {
   background: linear-gradient(135deg, #1E293B 0%, #312E81 50%, #06B6D4 100%);

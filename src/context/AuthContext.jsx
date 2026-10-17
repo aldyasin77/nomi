@@ -71,7 +71,10 @@ export function AuthProvider({ children }) {
     const demoUser = {
       id: 'demo-user-001',
       email: 'alex@nomi.app',
-      user_metadata: { full_name: 'Alex Tan' },
+      user_metadata: {
+        full_name: 'Alex Tan',
+        avatar_url: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
+      },
       isDemo: true,
     }
     localStorage.setItem('nomi_demo_user', JSON.stringify(demoUser))

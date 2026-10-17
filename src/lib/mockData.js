@@ -7,6 +7,8 @@ export const INITIAL_WALLETS = [
     type: 'bank',
     balance: 14500000,
     annual_interest_rate: 0,
+    card_theme: 'bca',
+    bank_logo: 'BCA.png',
     created_at: new Date(Date.now() - 60 * 86400000).toISOString(),
   },
   {
@@ -15,6 +17,8 @@ export const INITIAL_WALLETS = [
     type: 'savings',
     balance: 28000000,
     annual_interest_rate: 4.5, // 4.5% APR
+    card_theme: 'jago',
+    bank_logo: 'Jago.png',
     created_at: new Date(Date.now() - 50 * 86400000).toISOString(),
   },
   {
@@ -23,6 +27,8 @@ export const INITIAL_WALLETS = [
     type: 'e-wallet',
     balance: 1250000,
     annual_interest_rate: 0,
+    card_theme: 'gopay',
+    bank_logo: 'Gopay.png',
     created_at: new Date(Date.now() - 40 * 86400000).toISOString(),
   },
   {
@@ -31,6 +37,8 @@ export const INITIAL_WALLETS = [
     type: 'cash',
     balance: 750000,
     annual_interest_rate: 0,
+    card_theme: 'cash_dark',
+    bank_logo: null,
     created_at: new Date(Date.now() - 30 * 86400000).toISOString(),
   },
 ]

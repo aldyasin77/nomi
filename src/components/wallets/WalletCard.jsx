@@ -1,4 +1,6 @@
 import { Wallet, Landmark, Smartphone, PiggyBank, TrendingUp, Pencil, Trash2 } from 'lucide-react'
+import { WALLET_THEMES, detectTheme } from '@/data/walletThemes'
+import { resolveBankLogo, detectBankLogo } from '@/data/bankLogos'
 
 const formatCurrency = (amount) => {
   return new Intl.NumberFormat('id-ID', {
@@ -38,70 +40,113 @@ function getInterestProjection(balance, apr) {
   return balance * dailyRate * dayOfMonth
 }
 
-export default function WalletCard({ wallet, onEdit, onDelete }) {
-  const Icon = typeIcons[wallet.type?.toLowerCase()] || Wallet
+/**
+ * WalletCard — renders a single wallet with theme-based gradient and bank logo.
+ *
+ * @param {object}   wallet    Wallet data object
+ * @param {string}   theme     Override theme key (optional)
+ * @param {boolean}  compact   Compact mode for carousel cards (fixed height h-[190px], no edit/delete)
+ * @param {function} onEdit    Called when edit button is clicked
+ * @param {function} onDelete  Called when delete button is clicked
+ */
+export default function WalletCard({ wallet, theme, compact = false, onEdit, onDelete, className = '' }) {
+  const DefaultWalletIcon = typeIcons[wallet.type?.toLowerCase()] || Wallet
   const typeLabel = typeLabels[wallet.type?.toLowerCase()] || wallet.type
   const balance = parseFloat(wallet.balance) || 0
   const apr = parseFloat(wallet.annual_interest_rate) || 0
   const isSavings = wallet.type?.toLowerCase() === 'savings'
   const interestProjection = isSavings ? getInterestProjection(balance, apr) : 0
 
+  // Resolve theme: explicit prop > wallet.card_theme > auto-detect
+  const themeKey = theme || wallet.card_theme || detectTheme(wallet.name)
+  const themeData = WALLET_THEMES[themeKey] || WALLET_THEMES.aurora
+  const isDarkText = themeData.textClass === 'text-slate-900'
+
+  // Resolve logo filename from /public/logos/
+  const logoFile = resolveBankLogo(wallet.bank_logo || detectBankLogo(wallet.name))
+
   return (
-    <div className="aurora-gradient rounded-3xl p-6 text-white relative overflow-hidden group animate-fade-in">
+    <div
+      className={`rounded-3xl ${compact ? 'p-5 h-[190px]' : 'p-6 min-h-[190px]'} relative overflow-hidden group animate-fade-in flex flex-col justify-between select-none ${className}`}
+      style={{ background: themeData.gradient }}
+    >
       {/* Glassmorphic overlay */}
       <div className="absolute inset-0 bg-white/5 backdrop-blur-[1px]" />
 
-      {/* Content */}
-      <div className="relative z-10">
+      {/* Subtle pattern overlay */}
+      <div
+        className="absolute inset-0 opacity-[0.04] pointer-events-none"
+        style={{
+          backgroundImage: `radial-gradient(circle at 20% 80%, ${isDarkText ? 'rgba(0,0,0,0.3)' : 'rgba(255,255,255,0.3)'} 1px, transparent 1px)`,
+          backgroundSize: '24px 24px',
+        }}
+      />
+
+      {/* Content — uniform flex column distributed evenly */}
+      <div className="relative z-10 flex flex-col justify-between h-full">
         {/* Header */}
-        <div className="flex items-start justify-between mb-6">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-white/15 backdrop-blur-md flex items-center justify-center border border-white/20">
-              <Icon size={18} className="text-white" />
+        <div className="flex items-start justify-between gap-2">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className={`h-11 min-w-11 px-2.5 rounded-2xl ${logoFile ? 'bg-white/95 shadow-xs border border-white/40' : (isDarkText ? 'bg-black/10 border border-black/10' : 'bg-white/15 border border-white/20')} backdrop-blur-md flex items-center justify-center shrink-0 overflow-hidden`}>
+              {logoFile ? (
+                <img
+                  src={`/logos/${logoFile}`}
+                  alt={wallet.bank_logo || 'Bank Logo'}
+                  className="h-8 w-auto max-w-[56px] object-contain"
+                />
+              ) : (
+                <DefaultWalletIcon className={`h-6 w-6 ${isDarkText ? 'text-slate-900' : 'text-white/70'}`} />
+              )}
             </div>
-            <div>
-              <p className="text-sm font-semibold text-white/90">{wallet.name}</p>
-              <p className="text-xs text-white/50">{typeLabel}</p>
+            <div className="min-w-0">
+              <p className={`text-sm font-semibold truncate ${isDarkText ? 'text-slate-900' : 'text-white/90'}`}>{wallet.name}</p>
+              <p className={`text-xs ${isDarkText ? 'text-slate-600' : 'text-white/50'}`}>{typeLabel}</p>
             </div>
           </div>
-          
-          {/* Actions */}
-          <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-            <button
-              onClick={() => onEdit(wallet)}
-              className="p-2 rounded-lg bg-white/10 hover:bg-white/20 transition-colors cursor-pointer"
-            >
-              <Pencil size={14} />
-            </button>
-            <button
-              onClick={() => onDelete(wallet)}
-              className="p-2 rounded-lg bg-white/10 hover:bg-rose-500/50 transition-colors cursor-pointer"
-            >
-              <Trash2 size={14} />
-            </button>
-          </div>
+
+          {/* Actions — hidden in compact mode */}
+          {!compact && onEdit && onDelete && (
+            <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200 shrink-0">
+              <button
+                onClick={() => onEdit(wallet)}
+                className={`p-2 rounded-lg ${isDarkText ? 'bg-black/10 hover:bg-black/20' : 'bg-white/10 hover:bg-white/20'} transition-colors cursor-pointer`}
+              >
+                <Pencil size={14} className={isDarkText ? 'text-slate-800' : 'text-white'} />
+              </button>
+              <button
+                onClick={() => onDelete(wallet)}
+                className={`p-2 rounded-lg ${isDarkText ? 'bg-black/10 hover:bg-rose-500/50' : 'bg-white/10 hover:bg-rose-500/50'} transition-colors cursor-pointer`}
+              >
+                <Trash2 size={14} className={isDarkText ? 'text-slate-800' : 'text-white'} />
+              </button>
+            </div>
+          )}
         </div>
 
-        {/* Balance */}
-        <div>
-          <p className="text-xs text-white/50 font-medium mb-1">Balance</p>
-          <p className="text-3xl font-bold tracking-tight">{formatCurrency(balance)}</p>
-        </div>
-
-        {/* Interest info for Wallets with APR */}
-        {apr > 0 && (
-          <div className="mt-4 pt-3 border-t border-white/10 flex items-center justify-between text-xs">
-            <div className="flex items-center gap-1.5 text-cyan-200">
-              <TrendingUp size={14} />
-              <span className="font-medium">Bunga {apr}%/thn</span>
-            </div>
-            {wallet.interest_payout_date && (
-              <span className="text-white/80 bg-white/15 px-2.5 py-0.5 rounded-full font-semibold text-[10px]">
-                Cair tgl {wallet.interest_payout_date}
-              </span>
-            )}
+        {/* Bottom / Balance & Interest */}
+        <div className="mt-auto pt-2">
+          <div>
+            <p className={`text-[11px] ${isDarkText ? 'text-slate-600' : 'text-white/50'} font-medium mb-0.5`}>Balance</p>
+            <p className={`${compact ? 'text-2xl' : 'text-3xl'} font-bold tracking-tight ${isDarkText ? 'text-slate-900' : 'text-white'} truncate`}>
+              {formatCurrency(balance)}
+            </p>
           </div>
-        )}
+
+          {/* Interest info for Wallets with APR */}
+          {apr > 0 && (
+            <div className={`mt-2 pt-2 border-t ${isDarkText ? 'border-black/10' : 'border-white/10'} flex items-center justify-between text-xs`}>
+              <div className={`flex items-center gap-1.5 ${isDarkText ? 'text-emerald-700' : 'text-cyan-200'}`}>
+                <TrendingUp size={13} />
+                <span className="font-medium text-[11px]">Bunga {apr}%/thn</span>
+              </div>
+              {wallet.interest_payout_date && (
+                <span className={`${isDarkText ? 'text-slate-700 bg-black/10' : 'text-white/80 bg-white/15'} px-2 py-0.5 rounded-full font-semibold text-[10px]`}>
+                  Cair tgl {wallet.interest_payout_date}
+                </span>
+              )}
+            </div>
+          )}
+        </div>
       </div>
     </div>
   )

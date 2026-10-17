@@ -176,6 +176,8 @@ const GODRAYS_FRAGMENT_SHADER_SRC = `
   }
 `
 
+import { ShaderContext } from './ShaderContext'
+
 export function Shader({ children, className = '' }) {
   const canvasRef = useRef(null)
   const animFrameRef = useRef(null)
@@ -412,11 +414,14 @@ export function Shader({ children, className = '' }) {
   ])
 
   return (
-    <canvas
-      ref={canvasRef}
-      className={`block w-full h-full pointer-events-auto ${className}`}
-      style={{ touchAction: 'none' }}
-    />
+    <ShaderContext.Provider value={true}>
+      <canvas
+        ref={canvasRef}
+        className={`block w-full h-full pointer-events-auto ${className}`}
+        style={{ touchAction: 'none' }}
+      />
+      <div style={{ display: 'none' }}>{children}</div>
+    </ShaderContext.Provider>
   )
 }
 

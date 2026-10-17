@@ -53,6 +53,8 @@ export function useWallets() {
         balance: parseFloat(wallet.balance) || 0,
         annual_interest_rate: parseFloat(wallet.annual_interest_rate) || 0,
         interest_payout_date: wallet.interest_payout_date || null,
+        card_theme: wallet.card_theme || 'aurora',
+        bank_logo: wallet.bank_logo || null,
         created_at: new Date().toISOString(),
       }
       const updated = [...wallets, newWallet]
@@ -75,13 +77,15 @@ export function useWallets() {
       setWallets(prev => [...prev, data])
       return data
     } catch (err) {
-      // If interest_payout_date column does not exist yet in Supabase, retry without it
-      if (err.message && err.message.includes('interest_payout_date')) {
-        const { interest_payout_date, ...rest } = wallet
+      // If bank_logo or interest_payout_date column does not exist yet in Supabase, retry without it
+      if (err.message && (err.message.includes('bank_logo') || err.message.includes('interest_payout_date'))) {
+        const sanitized = { ...wallet }
+        if (err.message.includes('bank_logo')) delete sanitized.bank_logo
+        if (err.message.includes('interest_payout_date')) delete sanitized.interest_payout_date
         const { data, error } = await supabase
           .from('wallets')
           .insert([{
-            ...rest,
+            ...sanitized,
             user_id: user?.id,
           }])
           .select()
@@ -114,11 +118,13 @@ export function useWallets() {
       setWallets(prev => prev.map(w => w.id === id ? data : w))
       return data
     } catch (err) {
-      if (err.message && err.message.includes('interest_payout_date')) {
-        const { interest_payout_date, ...rest } = updates
+      if (err.message && (err.message.includes('bank_logo') || err.message.includes('interest_payout_date'))) {
+        const sanitized = { ...updates }
+        if (err.message.includes('bank_logo')) delete sanitized.bank_logo
+        if (err.message.includes('interest_payout_date')) delete sanitized.interest_payout_date
         const { data, error } = await supabase
           .from('wallets')
-          .update(rest)
+          .update(sanitized)
           .eq('id', id)
           .select()
           .single()

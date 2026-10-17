@@ -9,6 +9,7 @@ export default defineConfig({
   resolve: {
     alias: {
       '@': fileURLToPath(new URL('./src', import.meta.url)),
+      '@shaders/react': fileURLToPath(new URL('./src/components/shaders', import.meta.url)),
     },
   },
 })

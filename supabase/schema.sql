@@ -19,6 +19,8 @@ CREATE TABLE IF NOT EXISTS public.wallets (
     balance NUMERIC(15, 2) NOT NULL DEFAULT 0.00,
     annual_interest_rate NUMERIC(5, 2) DEFAULT 0.00,
     interest_payout_date NUMERIC(2, 0) DEFAULT NULL,
+    card_theme TEXT DEFAULT 'aurora',
+    bank_logo TEXT DEFAULT NULL,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
@@ -265,4 +267,7 @@ CREATE POLICY "Users can update own recurring transactions"
 CREATE POLICY "Users can delete own recurring transactions"
     ON public.recurring_transactions FOR DELETE
     USING (auth.uid() = user_id);
+
+-- Migration for existing databases:
+ALTER TABLE public.wallets ADD COLUMN IF NOT EXISTS bank_logo TEXT DEFAULT NULL;
 
