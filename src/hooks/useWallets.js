@@ -77,11 +77,22 @@ export function useWallets() {
       setWallets(prev => [...prev, data])
       return data
     } catch (err) {
-      // If bank_logo or interest_payout_date column does not exist yet in Supabase, retry without it
-      if (err.message && (err.message.includes('bank_logo') || err.message.includes('interest_payout_date'))) {
+      // If bank_logo or interest_payout_date or type constraint fails in Supabase, retry with sanitized payload
+      if (
+        err.message &&
+        (err.message.includes('bank_logo') ||
+          err.message.includes('interest_payout_date') ||
+          err.message.includes('wallets_type_check') ||
+          err.message.includes('check constraint'))
+      ) {
         const sanitized = { ...wallet }
         if (err.message.includes('bank_logo')) delete sanitized.bank_logo
         if (err.message.includes('interest_payout_date')) delete sanitized.interest_payout_date
+        if (err.message.includes('wallets_type_check') || err.message.includes('check constraint')) {
+          if (['credit_card', 'paylater'].includes(sanitized.type)) sanitized.type = 'bank'
+          else if (['investment', 'p2p'].includes(sanitized.type)) sanitized.type = 'savings'
+          else sanitized.type = 'cash'
+        }
         const { data, error } = await supabase
           .from('wallets')
           .insert([{
@@ -118,10 +129,21 @@ export function useWallets() {
       setWallets(prev => prev.map(w => w.id === id ? data : w))
       return data
     } catch (err) {
-      if (err.message && (err.message.includes('bank_logo') || err.message.includes('interest_payout_date'))) {
+      if (
+        err.message &&
+        (err.message.includes('bank_logo') ||
+          err.message.includes('interest_payout_date') ||
+          err.message.includes('wallets_type_check') ||
+          err.message.includes('check constraint'))
+      ) {
         const sanitized = { ...updates }
         if (err.message.includes('bank_logo')) delete sanitized.bank_logo
         if (err.message.includes('interest_payout_date')) delete sanitized.interest_payout_date
+        if (err.message.includes('wallets_type_check') || err.message.includes('check constraint')) {
+          if (['credit_card', 'paylater'].includes(sanitized.type)) sanitized.type = 'bank'
+          else if (['investment', 'p2p'].includes(sanitized.type)) sanitized.type = 'savings'
+          else sanitized.type = 'cash'
+        }
         const { data, error } = await supabase
           .from('wallets')
           .update(sanitized)

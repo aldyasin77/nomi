@@ -25,6 +25,7 @@ export default function TransactionModal({
   categories = [],
   initialTab = 'expense',
   initialType,
+  initialWalletId,
 }) {
   const isDesktop = useMediaQuery('(min-width: 768px)')
 
@@ -58,6 +59,7 @@ export default function TransactionModal({
             categories={categories}
             initialTab={initialTab}
             initialType={initialType}
+            initialWalletId={initialWalletId}
           />
         </DialogContent>
       </Dialog>
@@ -97,6 +99,7 @@ export default function TransactionModal({
             categories={categories}
             initialTab={initialTab}
             initialType={initialType}
+            initialWalletId={initialWalletId}
           />
         </div>
       </DrawerContent>

@@ -15,7 +15,7 @@ CREATE TABLE IF NOT EXISTS public.wallets (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE DEFAULT auth.uid(),
     name TEXT NOT NULL,
-    type TEXT NOT NULL CHECK (type IN ('cash', 'bank', 'e-wallet', 'savings')),
+    type TEXT NOT NULL CHECK (type IN ('cash', 'bank', 'e-wallet', 'savings', 'investment')),
     balance NUMERIC(15, 2) NOT NULL DEFAULT 0.00,
     annual_interest_rate NUMERIC(5, 2) DEFAULT 0.00,
     interest_payout_date NUMERIC(2, 0) DEFAULT NULL,

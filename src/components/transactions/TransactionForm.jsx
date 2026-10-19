@@ -18,6 +18,8 @@ import { Calendar } from '@/components/ui/calendar'
 import { NumericFormat } from 'react-number-format'
 import { Calendar as CalendarIcon, ChevronDown } from 'lucide-react'
 import { extractCategoryEmojiAndName } from '@/lib/categoryUtils'
+import CustomNumpad from '@/components/common/CustomNumpad'
+import { useIsMobile } from '@/hooks/useIsMobile'
 
 const TRANSACTION_TYPES = [
   { value: 'expense', label: 'Expense' },
@@ -32,14 +34,17 @@ export default function TransactionForm({
   categories = [],
   initialTab = 'expense',
   initialType,
+  initialWalletId,
 }) {
+  const isMobile = useIsMobile()
   const [loading, setLoading] = useState(false)
   const [datePopoverOpen, setDatePopoverOpen] = useState(false)
+  const [isNumpadOpen, setIsNumpadOpen] = useState(false)
   const [form, setForm] = useState({
     type: initialTab || initialType || 'expense',
     amount: '',
     transaction_date: new Date().toISOString().split('T')[0],
-    wallet_id: '',
+    wallet_id: initialWalletId || '',
     to_wallet_id: '',
     category_id: '',
     note: '',
@@ -51,9 +56,9 @@ export default function TransactionForm({
     setForm(prev => ({
       ...prev,
       type: activeType,
-      wallet_id: prev.wallet_id || (wallets[0]?.id || ''),
+      wallet_id: initialWalletId || prev.wallet_id || (wallets[0]?.id || ''),
     }))
-  }, [initialTab, initialType, wallets])
+  }, [initialTab, initialType, initialWalletId, wallets])
 
   const handleChange = (field, value) => {
     setForm(prev => ({ ...prev, [field]: value }))
@@ -156,8 +161,15 @@ export default function TransactionForm({
           placeholder="Rp 0"
           required
           customInput={Input}
-          inputMode="numeric"
-          className="h-13 text-2xl font-bold text-center border-slate-200 rounded-2xl bg-slate-50/70 shadow-inner focus-visible:ring-[#1A2C4C]/20 focus-visible:border-[#1A2C4C]"
+          readOnly={isMobile}
+          inputMode={isMobile ? 'none' : 'numeric'}
+          onFocus={() => {
+            if (isMobile) setIsNumpadOpen(true)
+          }}
+          onClick={() => {
+            if (isMobile) setIsNumpadOpen(true)
+          }}
+          className="h-13 text-2xl font-bold text-center border-slate-200 rounded-2xl bg-slate-50/70 shadow-inner focus-visible:ring-[#1A2C4C]/20 focus-visible:border-[#1A2C4C] cursor-pointer sm:cursor-text"
         />
       </div>
 
@@ -309,6 +321,15 @@ export default function TransactionForm({
           Simpan Transaksi
         </Button>
       </div>
+
+      {/* Mobile Custom Calculator Numpad */}
+      <CustomNumpad
+        isOpen={isNumpadOpen}
+        value={form.amount}
+        onChange={(val) => handleChange('amount', val)}
+        onClose={() => setIsNumpadOpen(false)}
+        onSubmit={() => setIsNumpadOpen(false)}
+      />
     </form>
   )
 }

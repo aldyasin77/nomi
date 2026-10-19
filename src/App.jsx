@@ -10,6 +10,7 @@ import LoginPage from './pages/LoginPage'
 import RegisterPage from './pages/RegisterPage'
 import DashboardPage from './pages/DashboardPage'
 import WalletsPage from './pages/WalletsPage'
+import WalletDetailPage from './pages/WalletDetailPage'
 import TransactionsPage from './pages/TransactionsPage'
 import RecurringPage from './pages/RecurringPage'
 import SettingsPage from './pages/SettingsPage'
@@ -72,6 +73,8 @@ export default function App() {
           >
             <Route path="/" element={<DashboardPage />} />
             <Route path="/wallets" element={<WalletsPage />} />
+            <Route path="/wallet/:id" element={<WalletDetailPage />} />
+            <Route path="/wallets/:id" element={<WalletDetailPage />} />
             <Route path="/transactions" element={<TransactionsPage />} />
             <Route path="/recurring" element={<RecurringPage />} />
             <Route path="/settings" element={<SettingsPage />} />

@@ -1,4 +1,5 @@
-import { Wallet, Landmark, Smartphone, PiggyBank, TrendingUp, Pencil, Trash2 } from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
+import { Wallet, Landmark, Smartphone, PiggyBank, LineChart, TrendingUp, Pencil, Trash2 } from 'lucide-react'
 import { WALLET_THEMES, detectTheme } from '@/data/walletThemes'
 import { resolveBankLogo, detectBankLogo } from '@/data/bankLogos'
 
@@ -13,18 +14,26 @@ const formatCurrency = (amount) => {
 
 const typeIcons = {
   cash: Wallet,
+  tunai: Wallet,
   bank: Landmark,
+  savings: PiggyBank,
+  tabungan: PiggyBank,
   'e-wallet': Smartphone,
   ewallet: Smartphone,
-  savings: PiggyBank,
+  investment: LineChart,
+  investasi: LineChart,
 }
 
 const typeLabels = {
-  cash: 'Cash',
-  bank: 'Bank Account',
+  cash: 'Tunai',
+  tunai: 'Tunai',
+  bank: 'Tabungan',
+  savings: 'Tabungan',
+  tabungan: 'Tabungan',
   'e-wallet': 'E-Wallet',
   ewallet: 'E-Wallet',
-  savings: 'Savings',
+  investment: 'Investasi',
+  investasi: 'Investasi',
 }
 
 /**
@@ -50,6 +59,7 @@ function getInterestProjection(balance, apr) {
  * @param {function} onDelete  Called when delete button is clicked
  */
 export default function WalletCard({ wallet, theme, compact = false, onEdit, onDelete, className = '' }) {
+  const navigate = useNavigate()
   const DefaultWalletIcon = typeIcons[wallet.type?.toLowerCase()] || Wallet
   const typeLabel = typeLabels[wallet.type?.toLowerCase()] || wallet.type
   const balance = parseFloat(wallet.balance) || 0
@@ -65,9 +75,16 @@ export default function WalletCard({ wallet, theme, compact = false, onEdit, onD
   // Resolve logo filename from /public/logos/
   const logoFile = resolveBankLogo(wallet.bank_logo || detectBankLogo(wallet.name))
 
+  const handleCardClick = () => {
+    if (wallet?.id) {
+      navigate(`/wallet/${wallet.id}`)
+    }
+  }
+
   return (
     <div
-      className={`rounded-3xl ${compact ? 'p-5 h-[190px]' : 'p-6 min-h-[190px]'} relative overflow-hidden group animate-fade-in flex flex-col justify-between select-none ${className}`}
+      onClick={handleCardClick}
+      className={`rounded-3xl ${compact ? 'p-5 h-[190px]' : 'p-6 min-h-[190px] cursor-pointer hover:shadow-lg transition-all duration-300 hover:-translate-y-0.5'} relative overflow-hidden group animate-fade-in flex flex-col justify-between select-none ${className}`}
       style={{ background: themeData.gradient }}
     >
       {/* Glassmorphic overlay */}
@@ -87,7 +104,7 @@ export default function WalletCard({ wallet, theme, compact = false, onEdit, onD
         {/* Header */}
         <div className="flex items-start justify-between gap-2">
           <div className="flex items-center gap-3 min-w-0">
-            <div className={`h-11 min-w-11 px-2.5 rounded-2xl ${logoFile ? 'bg-white/95 shadow-xs border border-white/40' : (isDarkText ? 'bg-black/10 border border-black/10' : 'bg-white/15 border border-white/20')} backdrop-blur-md flex items-center justify-center shrink-0 overflow-hidden`}>
+            <div className={`h-11 min-w-11 px-2.5 rounded-lg ${logoFile ? 'bg-white/95 shadow-xs border border-white/40' : (isDarkText ? 'bg-black/10 border border-black/10' : 'bg-white/15 border border-white/20')} backdrop-blur-md flex items-center justify-center shrink-0 overflow-hidden`}>
               {logoFile ? (
                 <img
                   src={`/logos/${logoFile}`}
@@ -108,13 +125,21 @@ export default function WalletCard({ wallet, theme, compact = false, onEdit, onD
           {!compact && onEdit && onDelete && (
             <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200 shrink-0">
               <button
-                onClick={() => onEdit(wallet)}
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  onEdit(wallet)
+                }}
                 className={`p-2 rounded-lg ${isDarkText ? 'bg-black/10 hover:bg-black/20' : 'bg-white/10 hover:bg-white/20'} transition-colors cursor-pointer`}
               >
                 <Pencil size={14} className={isDarkText ? 'text-slate-800' : 'text-white'} />
               </button>
               <button
-                onClick={() => onDelete(wallet)}
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  onDelete(wallet)
+                }}
                 className={`p-2 rounded-lg ${isDarkText ? 'bg-black/10 hover:bg-rose-500/50' : 'bg-white/10 hover:bg-rose-500/50'} transition-colors cursor-pointer`}
               >
                 <Trash2 size={14} className={isDarkText ? 'text-slate-800' : 'text-white'} />
@@ -135,7 +160,7 @@ export default function WalletCard({ wallet, theme, compact = false, onEdit, onD
           {/* Interest info for Wallets with APR */}
           {apr > 0 && (
             <div className={`mt-2 pt-2 border-t ${isDarkText ? 'border-black/10' : 'border-white/10'} flex items-center justify-between text-xs`}>
-              <div className={`flex items-center gap-1.5 ${isDarkText ? 'text-emerald-700' : 'text-cyan-200'}`}>
+              <div className={`flex items-center gap-1.5 ${isDarkText ? 'text-white/90' : 'text-white/90'}`}>
                 <TrendingUp size={13} />
                 <span className="font-medium text-[11px]">Bunga {apr}%/thn</span>
               </div>
