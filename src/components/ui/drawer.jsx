@@ -45,6 +45,7 @@ function DrawerOverlay({
 
 function DrawerContent({
   className,
+  contentWrapperClassName,
   children,
   ...props
 }) {
@@ -62,7 +63,7 @@ function DrawerContent({
         {...props}
       >
         <div className="mx-auto mt-3 mb-1 h-1.5 w-12 shrink-0 rounded-full bg-slate-200 dark:bg-slate-700" />
-        <div className="flex-1 overflow-y-auto overscroll-contain px-1 pb-6">
+        <div className={cn("flex-1 overflow-y-auto overscroll-contain px-1 pb-6", contentWrapperClassName)}>
           {children}
         </div>
       </DrawerPrimitive.Content>

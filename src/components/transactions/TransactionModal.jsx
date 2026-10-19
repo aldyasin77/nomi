@@ -66,32 +66,32 @@ export default function TransactionModal({
     )
   }
 
-  // MOBILE (Bottom Sheet Drawer with safe keyboard dvh)
+  // MOBILE (Bottom Sheet Drawer with dynamic height up to 90vh)
   return (
     <Drawer open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DrawerContent className="max-h-[85dvh] rounded-t-3xl border-t border-slate-100 bg-white dark:bg-slate-900 shadow-2xl">
-        <DrawerHeader className="px-6 pt-2 pb-3 border-b border-slate-100 dark:border-slate-800 flex flex-row items-center justify-between">
-          <div className="text-left">
-            <DrawerTitle className="text-lg font-bold text-slate-900 dark:text-white">
-              {modalTitle}
-            </DrawerTitle>
-            <DrawerDescription className="text-xs text-slate-500">
-              {modalSubtitle}
-            </DrawerDescription>
-          </div>
+      <DrawerContent
+        className="max-h-[90vh] h-auto flex flex-col overflow-hidden rounded-t-3xl border-t border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-2xl"
+        contentWrapperClassName="flex-1 flex flex-col overflow-hidden p-0 pb-0"
+      >
+        {/* Mobile Header: Left Close Button, Center Title */}
+        <DrawerHeader className="px-4 py-2.5 flex flex-row items-center justify-between border-b border-slate-100 dark:border-slate-800 shrink-0">
           <DrawerClose asChild>
             <button
               type="button"
               onClick={onClose}
-              className="p-1.5 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer"
-              aria-label="Close"
+              className="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors cursor-pointer"
+              aria-label="Tutup"
             >
-              <X size={18} />
+              <X size={16} />
             </button>
           </DrawerClose>
+          <DrawerTitle className="text-base font-bold text-slate-900 dark:text-white text-center">
+            Catat transaksi
+          </DrawerTitle>
+          <div className="w-8 h-8" /> {/* spacer for perfect center */}
         </DrawerHeader>
 
-        <div className="px-6 py-4">
+        <div className="relative flex-1 flex flex-col overflow-hidden">
           <TransactionForm
             onSubmit={onSubmit}
             onClose={onClose}

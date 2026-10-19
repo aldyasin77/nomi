@@ -1,8 +1,21 @@
 export const changelog = [
   {
+    version: 'v1.3.0',
+    date: '19 Okt 2026',
+    isLatest: true,
+    features: [
+      'Halaman baru Detail Dompet (/wallet/:id) dengan riwayat transaksi per dompet, navigasi bulan, dan ringkasan arus kas',
+      'Header dompet ringkas dan modern dengan logo bank/e-wallet, nama, jenis dompet, dan navigasi terintegrasi',
+      'Custom Numpad & Kalkulator bawaan mobile (+, -, ×, ÷, =) dengan live evaluation dan overlay dinamis seperti keyboard native',
+      'Desain baru Form Transaksi mobile-first dengan nominal besar dinamis, kursor aktif, dan aksi transfer antar dompet',
+      'Fitur pencarian kategori transaksi langsung (Live Search) pada drawer modal semua kategori',
+      'Optimasi performa logo finansial lokal dan penyempurnaan kompabilitas build produksi (Vercel)',
+    ],
+  },
+  {
     version: 'v1.2.0',
     date: '15 Okt 2026',
-    isLatest: true,
+    isLatest: false,
     features: [
       'Fitur Transaksi Rutin & Langganan bulanan otomatis dengan pilihan tanggal eksekusi 1-31',
       'Pusat Notifikasi pintar dengan badge pengingat jatuh tempo tagihan (Hari Ini, Segera, Terjadwal)',

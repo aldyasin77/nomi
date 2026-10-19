@@ -1,97 +1,10 @@
 import { useState, useEffect, useMemo, useRef } from 'react'
 import { Delete, ChevronDown, Check } from 'lucide-react'
-import { Button } from '@/components/ui/button'
+import { Button } from '@/components/ui/Button'
 import { useIsMobile } from '@/hooks/useIsMobile'
 
-/**
- * Evaluasi ekspresi matematika sederhana secara aman (+, -, ×, ÷)
- */
-export function evaluateMathExpression(expr) {
-  if (!expr || typeof expr !== 'string') return 0
-
-  // Ganti operator visual dengan operator standar
-  const clean = expr
-    .replace(/×/g, '*')
-    .replace(/÷/g, '/')
-    .replace(/,/g, '.')
-    .replace(/\s+/g, '')
-
-  // Hapus operator yang belum selesai di ujung (e.g. "50000+" -> "50000")
-  const sanitized = clean.replace(/[+\-*/]+$/, '')
-  if (!sanitized) return 0
-
-  // Validasi karakter aman
-  if (!/^[-+/*0-9.]+$/.test(sanitized)) return 0
-
-  try {
-    // Tokenizer
-    const tokens = []
-    let currentNumber = ''
-    for (let i = 0; i < sanitized.length; i++) {
-      const char = sanitized[i]
-      if ('+-*/'.includes(char)) {
-        if (currentNumber !== '') {
-          tokens.push(parseFloat(currentNumber))
-          currentNumber = ''
-        } else if (
-          char === '-' &&
-          (tokens.length === 0 || typeof tokens[tokens.length - 1] === 'string')
-        ) {
-          currentNumber = '-'
-          continue
-        }
-        tokens.push(char)
-      } else {
-        currentNumber += char
-      }
-    }
-    if (currentNumber !== '') {
-      tokens.push(parseFloat(currentNumber))
-    }
-
-    if (tokens.length === 0) return 0
-    if (tokens.length === 1 && typeof tokens[0] === 'number') return tokens[0]
-
-    // Precedence 1: Perkalian & Pembagian (* & /)
-    const intermediate = []
-    for (let i = 0; i < tokens.length; i++) {
-      const token = tokens[i]
-      if (token === '*' || token === '/') {
-        const prev = intermediate.pop()
-        const next = tokens[++i]
-        if (typeof prev !== 'number' || typeof next !== 'number') return 0
-        const res = token === '*' ? prev * next : (next !== 0 ? prev / next : 0)
-        intermediate.push(res)
-      } else {
-        intermediate.push(token)
-      }
-    }
-
-    // Precedence 2: Penjumlahan & Pengurangan (+ & -)
-    let result = typeof intermediate[0] === 'number' ? intermediate[0] : 0
-    for (let i = 1; i < intermediate.length; i += 2) {
-      const op = intermediate[i]
-      const next = intermediate[i + 1]
-      if (typeof next !== 'number') break
-      if (op === '+') result += next
-      else if (op === '-') result -= next
-    }
-
-    return isNaN(result) ? 0 : Math.round(result * 100) / 100
-  } catch (err) {
-    return 0
-  }
-}
-
-/**
- * Format string ekspresi dengan separator ribuan untuk kenyamanan visual
- */
-export function formatExpressionPreview(expr) {
-  if (!expr) return '0'
-  return expr.replace(/(\d+)/g, (match) => {
-    return Number(match).toLocaleString('id-ID')
-  })
-}
+import { evaluateMathExpression, formatExpressionPreview } from '@/lib/calcUtils'
+export { evaluateMathExpression, formatExpressionPreview }
 
 /**
  * CustomNumpad Component
@@ -103,6 +16,7 @@ export default function CustomNumpad({
   onClose,
   onSubmit,
   isOpen = true,
+  position = 'absolute', // 'absolute' (default) | 'fixed' | 'inline'
   className = '',
 }) {
   const isMobile = useIsMobile()
@@ -216,46 +130,48 @@ export default function CustomNumpad({
 
   const hasCalculation = /[+×÷-]/.test(expression) && expression !== '-'
 
-  return (
-    <>
-      {/* Semi-transparent Backdrop for outside dismiss */}
-      <div
-        className="fixed inset-0 bg-black/20 z-50 md:hidden animate-fade-in"
-        onClick={() => {
-          handleEvaluate()
-          if (onClose) onClose()
-        }}
-      />
+  const positionClass =
+    position === 'inline'
+      ? 'w-full'
+      : position === 'fixed'
+      ? 'fixed bottom-0 left-0 w-full z-50 animate-in slide-in-from-bottom-5 duration-200'
+      : 'absolute bottom-0 left-0 w-full z-50 animate-in slide-in-from-bottom-5 duration-200'
 
-      {/* Numpad Container fixed at bottom */}
-      <div
-        className={`fixed bottom-0 left-0 w-full z-50 bg-slate-100 dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 rounded-t-3xl shadow-2xl p-3 pb-6 md:hidden animate-in slide-in-from-bottom-5 duration-200 select-none ${className}`}
-        style={{ paddingBottom: 'max(1.5rem, env(safe-area-inset-bottom))' }}
-      >
-        {/* Top Header & Live Preview Bar */}
-        <div className="flex items-center justify-between px-2 pb-2.5 pt-0.5">
-          <div className="flex items-center gap-2 min-w-0">
-            <span className="text-[11px] font-bold tracking-wider uppercase text-slate-600 dark:text-slate-400">
-              Kalkulator
+  return (
+    <div
+      className={`${positionClass} bg-slate-100 dark:bg-slate-900 border-t border-slate-200/90 dark:border-slate-800 rounded-t-2xl shadow-[0_-10px_40px_rgba(0,0,0,0.1)] select-none ${className}`}
+      style={
+        position === 'fixed'
+          ? { paddingBottom: 'max(1.5rem, env(safe-area-inset-bottom))' }
+          : undefined
+      }
+    >
+      {/* Header Numpad (Tombol Tutup) */}
+      <div className="flex justify-between items-center px-4 py-2 border-b border-slate-200/80 dark:border-slate-800 shrink-0">
+        <div className="flex items-center gap-2 min-w-0">
+          <span className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+            KALKULATOR
+          </span>
+          {hasCalculation && (
+            <span className="text-xs font-semibold text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/60 px-2 py-0.5 rounded-full truncate">
+              {formatExpressionPreview(expression)}
             </span>
-            {hasCalculation && (
-              <span className="text-xs font-semibold text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/60 px-2 py-0.5 rounded-full truncate">
-                {formatExpressionPreview(expression)}
-              </span>
-            )}
-          </div>
-          <button
-            type="button"
-            onClick={() => {
-              handleEvaluate()
-              if (onClose) onClose()
-            }}
-            className="p-1 -mr-1 rounded-full text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors"
-            aria-label="Tutup keyboard"
-          >
-            <ChevronDown className="w-5 h-5" />
-          </button>
+          )}
         </div>
+        <button
+          type="button"
+          onClick={() => {
+            handleEvaluate()
+            if (onClose) onClose()
+          }}
+          className="p-1 -mr-1 rounded-full text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 hover:bg-slate-200/60 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+          aria-label="Tutup keyboard"
+        >
+          <ChevronDown className="w-5 h-5" />
+        </button>
+      </div>
+
+      <div className="p-3 pb-4">
 
         {/* 4 Columns x 5 Rows Grid */}
         <div className="grid grid-cols-4 gap-2">
@@ -465,6 +381,6 @@ export default function CustomNumpad({
           </Button>
         </div>
       </div>
-    </>
+    </div>
   )
 }
