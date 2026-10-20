@@ -98,7 +98,7 @@ export default function WalletDetailPage() {
   const [showAdjustBalanceModal, setShowAdjustBalanceModal] = useState(false)
   const [newBalanceInput, setNewBalanceInput] = useState('')
   const [isAdjusting, setIsAdjusting] = useState(false)
-  const [isAdjustNumpadOpen, setIsAdjustNumpadOpen] = useState(false)
+  const [isNumpadOpen, setIsNumpadOpen] = useState(false)
 
   // Navigate month
   const handlePrevMonth = () => {
@@ -250,6 +250,7 @@ export default function WalletDetailPage() {
       await updateWallet(wallet.id, { balance: newBal })
       toast.success('Saldo berhasil diatur!')
       setShowAdjustBalanceModal(false)
+      setIsNumpadOpen(false)
     } catch (err) {
       toast.error(err.message || 'Gagal mengatur saldo')
     } finally {
@@ -397,6 +398,7 @@ export default function WalletDetailPage() {
                 onClick={() => {
                   setNewBalanceInput(wallet.balance?.toString() || '0')
                   setShowAdjustBalanceModal(true)
+                  if (isMobile) setIsNumpadOpen(true)
                 }}
               >
                 ✎ Atur saldo
@@ -620,9 +622,23 @@ export default function WalletDetailPage() {
       {/* ========================================================= */}
       <Dialog
         open={showAdjustBalanceModal}
-        onOpenChange={(open) => !open && setShowAdjustBalanceModal(false)}
+        onOpenChange={(open) => {
+          if (!open) {
+            setShowAdjustBalanceModal(false)
+            setIsNumpadOpen(false)
+          }
+        }}
+        modal={!isMobile}
       >
-        <DialogContent className="max-w-md rounded-3xl p-6 bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 shadow-2xl">
+        <DialogContent
+          onInteractOutside={(e) => {
+            if (isNumpadOpen) e.preventDefault()
+          }}
+          onPointerDownOutside={(e) => {
+            if (isNumpadOpen) e.preventDefault()
+          }}
+          className="max-w-md rounded-3xl p-6 bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 shadow-2xl"
+        >
           <DialogHeader className="mb-2">
             <DialogTitle className="text-xl font-bold text-slate-900 dark:text-white">
               Atur Saldo Dompet
@@ -637,7 +653,10 @@ export default function WalletDetailPage() {
               <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300">
                 Saldo Baru
               </label>
-              <div className="relative flex items-center rounded-2xl border-2 border-slate-200 dark:border-slate-700 bg-slate-50/70 dark:bg-slate-800/60 px-4 py-3 focus-within:border-[#1A2C4C] dark:focus-within:border-blue-400 focus-within:bg-white dark:focus-within:bg-slate-900 focus-within:ring-4 focus-within:ring-[#1A2C4C]/10 transition-all">
+              <div
+                onClick={() => setIsNumpadOpen(true)}
+                className="relative flex items-center rounded-2xl border-2 border-slate-200 dark:border-slate-700 bg-slate-50/70 dark:bg-slate-800/60 px-4 py-3 focus-within:border-[#1A2C4C] dark:focus-within:border-blue-400 focus-within:bg-white dark:focus-within:bg-slate-900 focus-within:ring-4 focus-within:ring-[#1A2C4C]/10 transition-all cursor-pointer"
+              >
                 <span className="text-2xl font-bold text-slate-400 dark:text-slate-500 mr-2 select-none">
                   Rp
                 </span>
@@ -652,16 +671,14 @@ export default function WalletDetailPage() {
                     )
                   }}
                   placeholder="0"
-                  readOnly={isMobile}
-                  inputMode={isMobile ? 'none' : 'numeric'}
+                  readOnly={true}
+                  inputMode="none"
+                  autoComplete="off"
                   onFocus={() => {
-                    if (isMobile) setIsAdjustNumpadOpen(true)
+                    if (isMobile) setIsNumpadOpen(true)
                   }}
-                  onClick={() => {
-                    if (isMobile) setIsAdjustNumpadOpen(true)
-                  }}
-                  className="w-full text-2xl font-bold text-slate-900 dark:text-white bg-transparent border-0 outline-none p-0 tracking-tight cursor-pointer sm:cursor-text"
-                  autoFocus={!isMobile}
+                  onClick={() => setIsNumpadOpen(true)}
+                  className="w-full text-2xl font-bold text-slate-900 dark:text-white bg-transparent border-0 outline-none p-0 tracking-tight cursor-pointer"
                 />
               </div>
             </div>
@@ -671,7 +688,10 @@ export default function WalletDetailPage() {
                 type="button"
                 variant="secondary"
                 className="flex-1 rounded-2xl"
-                onClick={() => setShowAdjustBalanceModal(false)}
+                onClick={() => {
+                  setShowAdjustBalanceModal(false)
+                  setIsNumpadOpen(false)
+                }}
               >
                 Batal
               </Button>
@@ -689,11 +709,13 @@ export default function WalletDetailPage() {
 
       {/* Mobile Custom Calculator Numpad for Adjust Balance Dialog */}
       <CustomNumpad
-        isOpen={isAdjustNumpadOpen && showAdjustBalanceModal}
+        isOpen={isNumpadOpen && showAdjustBalanceModal}
         value={newBalanceInput}
         onChange={(val) => setNewBalanceInput(val)}
-        onClose={() => setIsAdjustNumpadOpen(false)}
-        onSubmit={() => setIsAdjustNumpadOpen(false)}
+        onClose={() => setIsNumpadOpen(false)}
+        onSubmit={() => setIsNumpadOpen(false)}
+        position="fixed"
+        className="z-[9999]"
       />
     </div>
   )

@@ -20,13 +20,18 @@ export default function CustomNumpad({
   className = '',
 }) {
   const isMobile = useIsMobile()
+  const isInternalChangeRef = useRef(false)
   const [expression, setExpression] = useState(() => {
     if (value === 0 || value === '0') return '0'
     return value ? String(value) : '0'
   })
 
-  // Sinkronisasi ekspresi saat prop value berubah dari luar
+  // Sinkronisasi ekspresi saat prop value berubah dari luar (bukan dari internal numpad)
   useEffect(() => {
+    if (isInternalChangeRef.current) {
+      isInternalChangeRef.current = false
+      return
+    }
     if (value === 0 || value === '0') {
       setExpression('0')
     } else if (value) {
@@ -51,6 +56,7 @@ export default function CustomNumpad({
   // Handle penekanan tombol angka
   const handleDigit = (digit) => {
     triggerHaptic()
+    isInternalChangeRef.current = true
     let nextExpr
     if (expression === '0') {
       nextExpr = digit
@@ -62,7 +68,7 @@ export default function CustomNumpad({
     // Evaluasi parsial secara live ke parent jika ekspresi berakhir angka
     const evaluated = evaluateMathExpression(nextExpr)
     if (onChange && !isNaN(evaluated)) {
-      onChange(evaluated)
+      onChange(Number(evaluated))
     }
   }
 
@@ -81,14 +87,23 @@ export default function CustomNumpad({
       // Ganti operator terakhir jika ditekan lagi
       setExpression(expression.trim().slice(0, -1) + op)
     } else {
-      // Evaluasi dulu sebelum menambahkan operator jika sudah ada operasi majemuk
-      setExpression(expression + op)
+      // Evaluasi dulu sebelum menambahkan operator jika sudah ada operasi sebelumnya
+      const hasPreviousOp = /[+×÷-]/.test(expression.slice(1))
+      if (hasPreviousOp) {
+        const intermediate = evaluateMathExpression(expression)
+        setExpression(String(intermediate) + op)
+        isInternalChangeRef.current = true
+        if (onChange) onChange(Number(intermediate))
+      } else {
+        setExpression(expression + op)
+      }
     }
   }
 
   // Handle Clear All ('C')
   const handleClear = () => {
     triggerHaptic()
+    isInternalChangeRef.current = true
     setExpression('0')
     if (onChange) onChange(0)
   }
@@ -96,6 +111,7 @@ export default function CustomNumpad({
   // Handle Backspace (Hapus 1 karakter)
   const handleBackspace = () => {
     triggerHaptic()
+    isInternalChangeRef.current = true
     if (expression.length <= 1 || expression === '0') {
       setExpression('0')
       if (onChange) onChange(0)
@@ -106,23 +122,28 @@ export default function CustomNumpad({
     setExpression(nextExpr)
     const evaluated = evaluateMathExpression(nextExpr)
     if (onChange && !isNaN(evaluated)) {
-      onChange(evaluated)
+      onChange(Number(evaluated))
     }
   }
 
   // Handle Evaluasi '='
   const handleEvaluate = () => {
     triggerHaptic()
+    isInternalChangeRef.current = true
     const result = evaluateMathExpression(expression)
-    const resultStr = String(result)
+    const resultNum = Number(result) || 0
+    const resultStr = String(resultNum)
     setExpression(resultStr)
-    if (onChange) onChange(result)
+    if (onChange) onChange(resultNum)
   }
 
   // Handle Submit / OK
   const handleOk = () => {
     triggerHaptic()
-    const finalResult = evaluateMathExpression(expression)
+    isInternalChangeRef.current = true
+    const result = evaluateMathExpression(expression)
+    const finalResult = Number(result) || 0
+    setExpression(String(finalResult))
     if (onChange) onChange(finalResult)
     if (onSubmit) onSubmit(finalResult)
     if (onClose) onClose()
