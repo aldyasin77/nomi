@@ -465,7 +465,7 @@ export default function TransactionForm({
               value={form.note}
               onChange={(e) => handleChange('note', e.target.value)}
               placeholder="Tambah catatan..."
-              className="w-full bg-transparent border-0 outline-none text-sm text-slate-800 dark:text-slate-100 placeholder:text-slate-400 py-0.5"
+              className="w-full bg-transparent border-0 outline-none text-base text-slate-800 dark:text-slate-100 placeholder:text-slate-400 py-0.5"
             />
           </div>
         </div>
@@ -621,7 +621,7 @@ export default function TransactionForm({
                 value={categorySearch}
                 onChange={(e) => setCategorySearch(e.target.value)}
                 placeholder="Cari kategori..."
-                className="pl-9 pr-8 h-10 rounded-xl bg-slate-100 dark:bg-slate-800 border-0 text-sm focus-visible:ring-1 focus-visible:ring-[#1A2C4C]"
+                className="pl-9 pr-8 h-10 rounded-xl bg-slate-100 dark:bg-slate-800 border-0 text-base focus-visible:ring-1 focus-visible:ring-[#1A2C4C]"
                 autoFocus
               />
               {categorySearch && (

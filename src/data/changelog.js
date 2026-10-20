@@ -1,8 +1,17 @@
 export const changelog = [
   {
+    version: 'v1.3.1',
+    date: '20 Okt 2026',
+    isLatest: true,
+    features: [
+      'Penyempurnaan interaksi mobile: pencegahan auto-zoom pada iOS Safari via viewport lock dan font input standar minimal 16px (text-base)',
+      'Perbaikan Custom Numpad pada modal Detail Dompet: pemblokiran keyboard native dan penempatan numpad yang presisi di bawah drawer',
+    ],
+  },
+  {
     version: 'v1.3.0',
     date: '19 Okt 2026',
-    isLatest: true,
+    isLatest: false,
     features: [
       'Halaman baru Detail Dompet (/wallet/:id) dengan riwayat transaksi per dompet, navigasi bulan, dan ringkasan arus kas',
       'Header dompet ringkas dan modern dengan logo bank/e-wallet, nama, jenis dompet, dan navigasi terintegrasi',

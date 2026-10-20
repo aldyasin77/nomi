@@ -120,7 +120,7 @@ export default function RecurringModal({
           value={form.note}
           onChange={(e) => handleChange('note', e.target.value)}
           placeholder="Contoh: Netflix, Spotify, BPJS, Kosan"
-          className="h-11 px-4 rounded-xl border-slate-200 bg-white text-sm text-slate-900 placeholder:text-slate-400 focus-visible:ring-[#1A2C4C]/20 focus-visible:border-[#1A2C4C]"
+          className="h-11 px-4 rounded-xl border-slate-200 bg-white text-base text-slate-900 placeholder:text-slate-400 focus-visible:ring-[#1A2C4C]/20 focus-visible:border-[#1A2C4C]"
         />
       </div>
 
@@ -155,7 +155,7 @@ export default function RecurringModal({
           value={form.execution_day.toString()}
           onValueChange={(val) => handleChange('execution_day', parseInt(val, 10))}
         >
-          <SelectTrigger className="h-11 w-full rounded-xl border-slate-200 bg-white text-sm focus:ring-[#1A2C4C]/20 focus:border-[#1A2C4C]">
+          <SelectTrigger className="h-11 w-full rounded-xl border-slate-200 bg-white text-base focus:ring-[#1A2C4C]/20 focus:border-[#1A2C4C]">
             <SelectValue placeholder="Pilih tanggal eksekusi..." />
           </SelectTrigger>
           <SelectContent
@@ -184,7 +184,7 @@ export default function RecurringModal({
           value={form.wallet_id}
           onValueChange={(val) => handleChange('wallet_id', val)}
         >
-          <SelectTrigger className="h-11 w-full rounded-xl border-slate-200 bg-white text-sm focus:ring-[#1A2C4C]/20 focus:border-[#1A2C4C]">
+          <SelectTrigger className="h-11 w-full rounded-xl border-slate-200 bg-white text-base focus:ring-[#1A2C4C]/20 focus:border-[#1A2C4C]">
             <SelectValue placeholder="Pilih dompet..." />
           </SelectTrigger>
           <SelectContent
@@ -211,7 +211,7 @@ export default function RecurringModal({
             value={form.to_wallet_id}
             onValueChange={(val) => handleChange('to_wallet_id', val)}
           >
-            <SelectTrigger className="h-11 w-full rounded-xl border-slate-200 bg-white text-sm focus:ring-[#1A2C4C]/20 focus:border-[#1A2C4C]">
+            <SelectTrigger className="h-11 w-full rounded-xl border-slate-200 bg-white text-base focus:ring-[#1A2C4C]/20 focus:border-[#1A2C4C]">
               <SelectValue placeholder="Pilih dompet tujuan..." />
             </SelectTrigger>
             <SelectContent
@@ -241,7 +241,7 @@ export default function RecurringModal({
             value={form.category_id}
             onValueChange={(val) => handleChange('category_id', val)}
           >
-            <SelectTrigger className="h-11 w-full rounded-xl border-slate-200 bg-white text-sm focus:ring-[#1A2C4C]/20 focus:border-[#1A2C4C]">
+            <SelectTrigger className="h-11 w-full rounded-xl border-slate-200 bg-white text-base focus:ring-[#1A2C4C]/20 focus:border-[#1A2C4C]">
               <SelectValue placeholder="Pilih kategori..." />
             </SelectTrigger>
             <SelectContent

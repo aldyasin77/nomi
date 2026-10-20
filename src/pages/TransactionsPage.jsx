@@ -342,7 +342,7 @@ export default function TransactionsPage() {
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Cari transaksi..."
-            className="w-full sm:w-60 h-10 pl-9 pr-3 text-xs rounded-xl border border-slate-200 bg-white placeholder:text-slate-400 focus:outline-hidden focus:ring-2 focus:ring-[#1A2C4C]/20 focus:border-[#1A2C4C]"
+            className="w-full sm:w-60 h-10 pl-9 pr-3 text-base sm:text-xs rounded-xl border border-slate-200 bg-white placeholder:text-slate-400 focus:outline-hidden focus:ring-2 focus:ring-[#1A2C4C]/20 focus:border-[#1A2C4C]"
           />
         </div>
       </div>

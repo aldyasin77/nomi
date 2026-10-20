@@ -145,7 +145,7 @@ export default function CategoryFormModal({ isOpen, onClose, onSubmit, editingCa
             value={form.name}
             onChange={(e) => handleChange('name', e.target.value)}
             placeholder="e.g. Coffee runs, Groceries, Gym"
-            className="h-11 px-4 rounded-xl border-slate-200 bg-white text-sm text-slate-900 placeholder:text-slate-400 focus-visible:ring-[#1A2C4C]/20 focus-visible:border-[#1A2C4C]"
+            className="h-11 px-4 rounded-xl border-slate-200 bg-white text-base text-slate-900 placeholder:text-slate-400 focus-visible:ring-[#1A2C4C]/20 focus-visible:border-[#1A2C4C]"
           />
         </div>
 
@@ -167,7 +167,7 @@ export default function CategoryFormModal({ isOpen, onClose, onSubmit, editingCa
               placeholder="Rp 0"
               customInput={Input}
               inputMode="numeric"
-              className="h-11 px-4 rounded-xl border-slate-200 bg-white text-sm text-slate-900 placeholder:text-slate-400 focus-visible:ring-[#1A2C4C]/20 focus-visible:border-[#1A2C4C]"
+              className="h-11 px-4 rounded-xl border-slate-200 bg-white text-base text-slate-900 placeholder:text-slate-400 focus-visible:ring-[#1A2C4C]/20 focus-visible:border-[#1A2C4C]"
             />
             <p className="text-[11px] text-slate-400 mt-1">
               Opsional: Tentukan batas anggaran bulanan untuk kategori ini
@@ -211,7 +211,7 @@ export default function CategoryFormModal({ isOpen, onClose, onSubmit, editingCa
                       value={searchEmoji}
                       onChange={(e) => setSearchEmoji(e.target.value)}
                       placeholder="Cari emoji..."
-                      className="w-full h-8 pl-8 pr-3 text-xs rounded-lg border border-slate-200 bg-slate-50 focus:bg-white focus:outline-hidden focus:border-indigo-500"
+                      className="w-full h-8 pl-8 pr-3 text-base sm:text-xs rounded-lg border border-slate-200 bg-slate-50 focus:bg-white focus:outline-hidden focus:border-indigo-500"
                     />
                   </div>
 

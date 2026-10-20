@@ -262,7 +262,7 @@ export default function WalletFormModal({
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           placeholder="Cari bank atau e-wallet..."
-          className="h-11 pl-10 pr-9 rounded-2xl bg-slate-50 dark:bg-slate-800/80 border-slate-200 dark:border-slate-700 text-sm focus-visible:ring-[#1A2C4C]/20 focus-visible:border-[#1A2C4C] placeholder:text-slate-400"
+          className="h-11 pl-10 pr-9 rounded-2xl bg-slate-50 dark:bg-slate-800/80 border-slate-200 dark:border-slate-700 text-base focus-visible:ring-[#1A2C4C]/20 focus-visible:border-[#1A2C4C] placeholder:text-slate-400"
           autoFocus={!isEditing}
         />
         {searchQuery && (
@@ -389,7 +389,7 @@ export default function WalletFormModal({
             value={form.name}
             onChange={(e) => handleChange('name', e.target.value)}
             placeholder="Contoh: BCA Utama, GoPay Harian"
-            className="h-12 px-4 rounded-2xl border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm font-medium text-slate-900 dark:text-white placeholder:text-slate-400 focus-visible:ring-[#1A2C4C]/20 focus-visible:border-[#1A2C4C]"
+            className="h-12 px-4 rounded-2xl border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-base font-medium text-slate-900 dark:text-white placeholder:text-slate-400 focus-visible:ring-[#1A2C4C]/20 focus-visible:border-[#1A2C4C]"
           />
         </div>
       </div>
@@ -403,7 +403,7 @@ export default function WalletFormModal({
           value={form.type}
           onValueChange={(val) => handleChange('type', val)}
         >
-          <SelectTrigger className="min-h-[52px] h-auto w-full rounded-2xl border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-4 py-2 text-sm focus:ring-[#1A2C4C]/20 focus:border-[#1A2C4C]">
+          <SelectTrigger className="min-h-[52px] h-auto w-full rounded-2xl border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-4 py-2 text-base focus:ring-[#1A2C4C]/20 focus:border-[#1A2C4C]">
             <SelectValue placeholder="Pilih tipe dompet..." />
           </SelectTrigger>
           <SelectContent
@@ -436,7 +436,10 @@ export default function WalletFormModal({
         <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
           Saldo saat ini
         </label>
-        <div className="relative flex items-center rounded-2xl border-2 border-slate-200 dark:border-slate-700 bg-slate-50/70 dark:bg-slate-800/60 px-4 py-2.5 focus-within:border-[#1A2C4C] dark:focus-within:border-blue-400 focus-within:bg-white dark:focus-within:bg-slate-900 focus-within:ring-4 focus-within:ring-[#1A2C4C]/10 transition-all">
+        <div
+          onClick={() => setIsNumpadOpen(true)}
+          className="relative flex items-center rounded-2xl border-2 border-slate-200 dark:border-slate-700 bg-slate-50/70 dark:bg-slate-800/60 px-4 py-2.5 focus-within:border-[#1A2C4C] dark:focus-within:border-blue-400 focus-within:bg-white dark:focus-within:bg-slate-900 focus-within:ring-4 focus-within:ring-[#1A2C4C]/10 transition-all cursor-pointer"
+        >
           <span className="text-2xl font-bold text-slate-400 dark:text-slate-500 mr-2 select-none">
             Rp
           </span>
@@ -451,12 +454,11 @@ export default function WalletFormModal({
             placeholder="0"
             readOnly={!isDesktop}
             inputMode={!isDesktop ? 'none' : 'numeric'}
+            autoComplete="off"
             onFocus={() => {
               if (!isDesktop) setIsNumpadOpen(true)
             }}
-            onClick={() => {
-              if (!isDesktop) setIsNumpadOpen(true)
-            }}
+            onClick={() => setIsNumpadOpen(true)}
             className="w-full text-2xl sm:text-3xl font-bold text-slate-900 dark:text-white bg-transparent border-0 outline-none p-0 tracking-tight placeholder:text-slate-300 dark:placeholder:text-slate-600 cursor-pointer sm:cursor-text"
           />
         </div>
@@ -491,7 +493,7 @@ export default function WalletFormModal({
                   setForm((prev) => ({ ...prev, card_theme: val, _themeManuallySet: true }))
                 }
               >
-                <SelectTrigger className="h-11 w-full rounded-xl border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs sm:text-sm focus:ring-[#1A2C4C]/20 focus:border-[#1A2C4C]">
+                <SelectTrigger className="h-11 w-full rounded-xl border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-base focus:ring-[#1A2C4C]/20 focus:border-[#1A2C4C]">
                   <SelectValue placeholder="Pilih tema kartu..." />
                 </SelectTrigger>
                 <SelectContent
@@ -547,7 +549,7 @@ export default function WalletFormModal({
                       value={form.annual_interest_rate}
                       onChange={(e) => handleChange('annual_interest_rate', e.target.value)}
                       placeholder="Contoh: 4.5"
-                      className="h-10 px-3 rounded-xl border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs"
+                      className="h-10 px-3 rounded-xl border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-base"
                     />
                   </div>
                   <div>
@@ -558,7 +560,7 @@ export default function WalletFormModal({
                       value={form.interest_payout_date}
                       onValueChange={(val) => handleChange('interest_payout_date', val)}
                     >
-                      <SelectTrigger className="h-10 w-full rounded-xl border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs">
+                      <SelectTrigger className="h-10 w-full rounded-xl border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-base">
                         <SelectValue placeholder="Pilih tanggal..." />
                       </SelectTrigger>
                       <SelectContent className="max-h-48 z-[9999] bg-white dark:bg-slate-900">
@@ -626,7 +628,10 @@ export default function WalletFormModal({
   // Mobile Bottom Sheet Drawer
   return (
     <Drawer open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DrawerContent className="max-h-[88dvh] rounded-t-3xl border-t border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-2xl flex flex-col">
+      <DrawerContent
+        className="max-h-[88dvh] rounded-t-3xl border-t border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-2xl flex flex-col overflow-hidden"
+        contentWrapperClassName="relative flex-1 flex flex-col overflow-hidden p-0 pb-0"
+      >
         <DrawerHeader className="flex flex-row items-center justify-between px-6 pt-2 pb-3 border-b border-slate-100 dark:border-slate-800 shrink-0">
           <div>
             <DrawerTitle className="text-lg font-bold text-slate-900 dark:text-white text-left">
@@ -648,19 +653,23 @@ export default function WalletFormModal({
           </DrawerClose>
         </DrawerHeader>
 
-        <div className="flex-1 overflow-y-auto px-6 py-4">
+        <div className={`flex-1 overflow-y-auto px-6 py-4 transition-all duration-200 ${isNumpadOpen ? 'pb-96' : 'pb-4'}`}>
           {step === 1 ? renderStep1() : renderStep2()}
         </div>
-      </DrawerContent>
 
-      {/* Mobile Custom Calculator Numpad */}
-      <CustomNumpad
-        isOpen={isNumpadOpen}
-        value={form.balance}
-        onChange={(val) => handleChange('balance', val)}
-        onClose={() => setIsNumpadOpen(false)}
-        onSubmit={() => setIsNumpadOpen(false)}
-      />
+        {/* Mobile Custom Calculator Numpad (di luar area scroll form) */}
+        {isNumpadOpen && (
+          <CustomNumpad
+            isOpen={true}
+            position="absolute"
+            className="z-50"
+            value={form.balance}
+            onChange={(val) => handleChange('balance', val)}
+            onClose={() => setIsNumpadOpen(false)}
+            onSubmit={() => setIsNumpadOpen(false)}
+          />
+        )}
+      </DrawerContent>
     </Drawer>
   )
 }

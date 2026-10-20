@@ -101,7 +101,7 @@ export default function ChangePasswordModal({ isOpen, onClose }) {
               if (error) setError('')
             }}
             placeholder="Minimal 6 karakter"
-            className="h-11 pl-4 pr-11 rounded-xl border-slate-200 bg-white text-sm text-slate-900 focus-visible:ring-[#1A2C4C]/20 focus-visible:border-[#1A2C4C]"
+            className="h-11 pl-4 pr-11 rounded-xl border-slate-200 bg-white text-base text-slate-900 focus-visible:ring-[#1A2C4C]/20 focus-visible:border-[#1A2C4C]"
           />
           <button
             type="button"
@@ -129,7 +129,7 @@ export default function ChangePasswordModal({ isOpen, onClose }) {
               if (error) setError('')
             }}
             placeholder="Ketik ulang kata sandi baru"
-            className="h-11 pl-4 pr-11 rounded-xl border-slate-200 bg-white text-sm text-slate-900 focus-visible:ring-[#1A2C4C]/20 focus-visible:border-[#1A2C4C]"
+            className="h-11 pl-4 pr-11 rounded-xl border-slate-200 bg-white text-base text-slate-900 focus-visible:ring-[#1A2C4C]/20 focus-visible:border-[#1A2C4C]"
           />
           <button
             type="button"

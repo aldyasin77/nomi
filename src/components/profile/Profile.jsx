@@ -327,7 +327,7 @@ export default function Profile({ onOpenCategoryConfig }) {
               value={fullName}
               onChange={(e) => setFullName(e.target.value)}
               placeholder="Masukkan nama lengkap kamu"
-              className="h-11 px-4 rounded-xl border-slate-200 bg-white text-sm text-slate-900 focus-visible:ring-[#1A2C4C]/20 focus-visible:border-[#1A2C4C]"
+              className="h-11 px-4 rounded-xl border-slate-200 bg-white text-base text-slate-900 focus-visible:ring-[#1A2C4C]/20 focus-visible:border-[#1A2C4C]"
             />
           </div>
 
