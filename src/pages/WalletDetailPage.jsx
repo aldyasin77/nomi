@@ -9,10 +9,13 @@ import {
   Wallet as WalletIcon,
   Search,
   X,
+  MoreHorizontal,
 } from 'lucide-react'
 import { useWallets } from '@/hooks/useWallets'
 import { useTransactions } from '@/hooks/useTransactions'
 import { useCategories } from '@/hooks/useCategories'
+import { useAuth } from '@/context/AuthContext'
+import { supabase, isSupabaseConfigured } from '@/lib/supabase'
 import BankItemIcon from '@/components/wallets/BankItemIcon'
 import WalletFormModal from '@/components/wallets/WalletFormModal'
 import TransactionModal from '@/components/transactions/TransactionModal'
@@ -67,11 +70,18 @@ function formatDateHeader(dateStr) {
   if (dateDateString === yesterdayDateString) return 'Kemarin'
 
   const days = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu']
+  const shortMonths = [
+    'Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun',
+    'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'
+  ]
   const dayName = days[date.getDay()]
   const dayNum = date.getDate()
-  const monthName = INDONESIAN_MONTHS[date.getMonth()]
+  const monthName = shortMonths[date.getMonth()]
   const year = date.getFullYear()
 
+  if (year === today.getFullYear()) {
+    return `${dayName}, ${dayNum} ${monthName}`
+  }
   return `${dayName}, ${dayNum} ${monthName} ${year}`
 }
 
@@ -79,9 +89,10 @@ export default function WalletDetailPage() {
   const { id } = useParams()
   const navigate = useNavigate()
 
+  const { user } = useAuth()
   const { wallets, loading: walletsLoading, updateWallet } = useWallets()
   const { transactions, addTransaction } = useTransactions()
-  const { categories } = useCategories()
+  const { categories, addCategory } = useCategories()
 
   // Find target wallet
   const wallet = useMemo(() => {
@@ -252,8 +263,72 @@ export default function WalletDetailPage() {
     if (!wallet) return
     setIsAdjusting(true)
     try {
-      const newBal = parseFloat(newBalanceInput) || 0
-      await updateWallet(wallet.id, { balance: newBal })
+      const saldoSaatIni = parseFloat(wallet.balance) || 0
+      const saldoBaru = parseFloat(newBalanceInput) || 0
+      const selisih = saldoBaru - saldoSaatIni
+
+      if (selisih !== 0) {
+        const type = selisih > 0 ? 'income' : 'expense'
+        const amount = Math.abs(selisih)
+
+        // 1. Cek apakah kategori 'Lain-lain' atau sejenis sudah ada di state
+        let targetCategory = categories.find(
+          (c) =>
+            c.type === type &&
+            (c.name.toLowerCase().includes('lain') ||
+              c.name.toLowerCase().includes('other') ||
+              c.name.toLowerCase().includes('penyesuaian'))
+        )
+
+        // 2. Jika tidak ada di state dan Supabase aktif, query langsung ke tabel categories
+        if (!targetCategory && isSupabaseConfigured && !user?.isDemo) {
+          try {
+            const { data: catDb } = await supabase
+              .from('categories')
+              .select('id, name, type')
+              .eq('type', type)
+              .or('name.ilike.%lain%,name.ilike.%other%,name.ilike.%penyesuaian%')
+              .limit(1)
+              .maybeSingle()
+            if (catDb) targetCategory = catDb
+          } catch (e) {
+            console.warn('Could not query categories table directly:', e)
+          }
+        }
+
+        // 3. Fallback: Jika kategori 'Lain-lain' belum ada di database, buat kategori baru terlebih dahulu
+        if (!targetCategory) {
+          try {
+            targetCategory = await addCategory({
+              name: 'Lain-lain',
+              type: type,
+              monthly_limit: 0,
+            })
+          } catch (err) {
+            console.error('Failed to create fallback category Lain-lain:', err)
+          }
+        }
+
+        const categoryId = targetCategory?.id || null
+
+        const newTxn = {
+          type,
+          amount,
+          transaction_date: new Date().toISOString().split('T')[0],
+          wallet_id: wallet.id,
+          category_id: categoryId,
+          note: 'Penyesuaian saldo',
+        }
+
+        // Jalankan kedua operasi (insert transaksi penyesuaian & update saldo wallet) secara bersamaan
+        await Promise.all([
+          addTransaction(newTxn),
+          updateWallet(wallet.id, { balance: saldoBaru }),
+        ])
+      } else {
+        await updateWallet(wallet.id, { balance: saldoBaru })
+      }
+
       toast.success('Saldo berhasil diatur!')
       setShowAdjustBalanceModal(false)
       setIsNumpadOpen(false)
@@ -417,105 +492,127 @@ export default function WalletDetailPage() {
         {/* KOLOM KANAN (2/3 bagian): Daftar Transaksi & Filter        */}
         {/* ========================================================= */}
         <div className="md:col-span-2 space-y-4">
-          <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 border border-slate-200/80 dark:border-slate-800 shadow-sm">
-            {/* Header Transaksi & Navigasi Bulan */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-slate-100 dark:border-slate-800">
-              <h3 className="text-xl font-bold text-slate-900 dark:text-white tracking-tight">
-                Transaksi
-              </h3>
+          {/* Header Transaksi & Navigasi Bulan */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-200/70 dark:border-slate-800">
+            <h3 className="text-xl font-bold text-slate-900 dark:text-white tracking-tight">
+              Transaksi
+            </h3>
 
-              {/* Month Navigator (< Oktober 2026 >) */}
-              <div className="flex items-center gap-1.5 bg-slate-50 dark:bg-slate-800/80 p-1 rounded-2xl border border-slate-200/80 dark:border-slate-700/80 self-start sm:self-auto">
-                <button
-                  type="button"
-                  onClick={handlePrevMonth}
-                  className="p-1 rounded-xl hover:bg-white dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 transition-colors cursor-pointer"
-                  aria-label="Bulan sebelumnya"
-                >
-                  <ChevronLeft className="w-4 h-4" />
-                </button>
-                <span className="text-xs font-semibold text-slate-800 dark:text-slate-200 px-2 min-w-[110px] text-center select-none">
-                  {INDONESIAN_MONTHS[selectedMonth]} {selectedYear}
-                </span>
-                <button
-                  type="button"
-                  onClick={handleNextMonth}
-                  className="p-1 rounded-xl hover:bg-white dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 transition-colors cursor-pointer"
-                  aria-label="Bulan berikutnya"
-                >
-                  <ChevronRight className="w-4 h-4" />
-                </button>
-              </div>
-            </div>
-
-            {/* Filter Chips: Semua, Masuk, Keluar */}
-            <div className="flex items-center gap-2 pt-4 pb-2">
+            {/* Month Navigator (< Oktober 2026 >) */}
+            <div className="flex items-center gap-1.5 bg-slate-100/80 dark:bg-slate-800/80 p-1 rounded-2xl border border-slate-200/80 dark:border-slate-700/80 self-start sm:self-auto">
               <button
                 type="button"
-                onClick={() => setTypeFilter('all')}
-                className={`px-4 py-1.5 rounded-full text-xs font-semibold transition-all cursor-pointer ${typeFilter === 'all'
-                    ? 'bg-[#1A2C4C] text-white shadow-xs'
-                    : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200'
-                  }`}
+                onClick={handlePrevMonth}
+                className="p-1 rounded-xl hover:bg-white dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 transition-colors cursor-pointer"
+                aria-label="Bulan sebelumnya"
               >
-                Semua
+                <ChevronLeft className="w-4 h-4" />
               </button>
+              <span className="text-xs font-semibold text-slate-800 dark:text-slate-200 px-2 min-w-[110px] text-center select-none">
+                {INDONESIAN_MONTHS[selectedMonth]} {selectedYear}
+              </span>
               <button
                 type="button"
-                onClick={() => setTypeFilter('income')}
-                className={`px-4 py-1.5 rounded-full text-xs font-semibold transition-all cursor-pointer ${typeFilter === 'income'
-                    ? 'bg-blue-600 text-white shadow-xs'
-                    : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200'
-                  }`}
+                onClick={handleNextMonth}
+                className="p-1 rounded-xl hover:bg-white dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 transition-colors cursor-pointer"
+                aria-label="Bulan berikutnya"
               >
-                Masuk
-              </button>
-              <button
-                type="button"
-                onClick={() => setTypeFilter('expense')}
-                className={`px-4 py-1.5 rounded-full text-xs font-semibold transition-all cursor-pointer ${typeFilter === 'expense'
-                    ? 'bg-red-500 text-white shadow-xs'
-                    : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200'
-                  }`}
-              >
-                Keluar
+                <ChevronRight className="w-4 h-4" />
               </button>
             </div>
+          </div>
 
-            {/* Transaction List Grouped by Date */}
-            <div className="mt-4 space-y-6">
-              {Object.keys(groupedTransactions).length === 0 ? (
-                <div className="text-center py-12 px-4">
-                  <div className="w-12 h-12 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center mx-auto mb-3 text-slate-400">
-                    <Search className="w-5 h-5" />
-                  </div>
-                  <p className="text-sm font-semibold text-slate-700 dark:text-slate-300">
-                    Tidak ada transaksi
-                  </p>
-                  <p className="text-xs text-slate-400 mt-1">
-                    Belum ada riwayat transaksi pada {INDONESIAN_MONTHS[selectedMonth]} {selectedYear}.
-                  </p>
-                  <Button
-                    variant="outline"
-                    className="mt-4 rounded-full text-xs"
-                    onClick={() => {
-                      setTransactionModalTab('expense')
-                      setShowTransactionModal(true)
-                    }}
-                  >
-                    + Catat Transaksi Baru
-                  </Button>
+          {/* Filter Chips: Semua, Masuk, Keluar */}
+          <div className="flex items-center gap-2 py-1">
+            <button
+              type="button"
+              onClick={() => setTypeFilter('all')}
+              className={`px-4 py-1.5 rounded-full text-xs font-semibold transition-all cursor-pointer ${typeFilter === 'all'
+                  ? 'bg-[#1A2C4C] text-white shadow-xs'
+                  : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200'
+                }`}
+            >
+              Semua
+            </button>
+            <button
+              type="button"
+              onClick={() => setTypeFilter('income')}
+              className={`px-4 py-1.5 rounded-full text-xs font-semibold transition-all cursor-pointer ${typeFilter === 'income'
+                  ? 'bg-blue-600 text-white shadow-xs'
+                  : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200'
+                }`}
+            >
+              Masuk
+            </button>
+            <button
+              type="button"
+              onClick={() => setTypeFilter('expense')}
+              className={`px-4 py-1.5 rounded-full text-xs font-semibold transition-all cursor-pointer ${typeFilter === 'expense'
+                  ? 'bg-red-500 text-white shadow-xs'
+                  : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200'
+                }`}
+            >
+              Keluar
+            </button>
+          </div>
+
+          {/* Transaction List Grouped by Date */}
+          <div className="mt-2 space-y-5">
+            {Object.keys(groupedTransactions).length === 0 ? (
+              <div className="text-center py-12 px-4">
+                <div className="w-12 h-12 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center mx-auto mb-3 text-slate-400">
+                  <Search className="w-5 h-5" />
                 </div>
-              ) : (
-                Object.entries(groupedTransactions).map(([dateStr, items]) => (
-                  <div key={dateStr} className="space-y-2">
-                    {/* Date Section Header */}
-                    <p className="text-xs font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider px-1">
-                      {formatDateHeader(dateStr)}
-                    </p>
+                <p className="text-sm font-semibold text-slate-700 dark:text-slate-300">
+                  Tidak ada transaksi
+                </p>
+                <p className="text-xs text-slate-400 mt-1">
+                  Belum ada riwayat transaksi pada {INDONESIAN_MONTHS[selectedMonth]} {selectedYear}.
+                </p>
+                <Button
+                  variant="outline"
+                  className="mt-4 rounded-full text-xs"
+                  onClick={() => {
+                    setTransactionModalTab('expense')
+                    setShowTransactionModal(true)
+                  }}
+                >
+                  + Catat Transaksi Baru
+                </Button>
+              </div>
+            ) : (
+              Object.entries(groupedTransactions).map(([dateStr, items]) => {
+                // Calculate Total Nominal Transaksi Harian
+                const dailyTotal = items.reduce((sum, tx) => {
+                  const amt = parseFloat(tx.amount) || 0
+                  const isIncome =
+                    tx.type === 'income' ||
+                    (tx.type === 'transfer' && tx.to_wallet_id === wallet.id)
+                  return isIncome ? sum + amt : sum - amt
+                }, 0)
 
-                    {/* Transaction Items */}
-                    <div className="divide-y divide-slate-100 dark:divide-slate-800/80 rounded-2xl border border-slate-100 dark:border-slate-800 overflow-hidden bg-slate-50/50 dark:bg-slate-800/30">
+                return (
+                  <div key={dateStr} className="space-y-0.5">
+                    {/* Header Kelompok Tanggal: Flex justify-between items-center py-3 font-semibold */}
+                    <div className="flex justify-between items-center py-3 font-semibold text-slate-900 dark:text-white">
+                      <span className="text-base sm:text-lg tracking-tight">
+                        {formatDateHeader(dateStr)}
+                      </span>
+                      <span
+                        className={`text-base sm:text-lg ${dailyTotal > 0
+                            ? 'text-blue-600 dark:text-blue-400'
+                            : dailyTotal < 0
+                              ? 'text-red-500 dark:text-red-400'
+                              : 'text-slate-500'
+                          }`}
+                      >
+                        {dailyTotal < 0 ? '-' : ''}
+                        {formatCurrency(Math.abs(dailyTotal))}
+                      </span>
+                    </div>
+
+                    {/* Transaction Items: Bersih tanpa border luar, cukup border-bottom tipis */}
+                    <div className="divide-y divide-slate-100 dark:divide-slate-800/80">
                       {items.map((tx) => {
                         const amt = parseFloat(tx.amount) || 0
                         const isIncome =
@@ -527,37 +624,40 @@ export default function WalletDetailPage() {
                         const balanceAfter = runningBalancesMap[tx.id]
 
                         // Category extraction
+                        const isAdjustment = tx.note === 'Penyesuaian saldo'
+                        const rawCategory = isAdjustment
+                          ? (tx.category?.name && !tx.category.name.toLowerCase().includes('food') ? tx.category : '⋯ Lain-lain')
+                          : (tx.category || (isTransfer ? 'Transfer' : 'Umum'))
+
                         const catData = extractCategoryEmojiAndName(
-                          tx.category || (isTransfer ? 'Transfer' : 'Umum'),
+                          rawCategory,
                           isIncome ? 'income' : 'expense'
                         )
 
                         const title = tx.note || (isTransfer ? (isIncome ? `Transfer dari ${tx.wallet?.name || 'Dompet lain'}` : `Transfer ke ${tx.to_wallet?.name || 'Dompet lain'}`) : catData.name || 'Transaksi')
-                        const subtitle = isTransfer ? 'Transfer Antar Dompet' : catData.name || 'Umum'
+                        const subtitle = isTransfer ? 'Transfer Antar Dompet' : (isAdjustment ? 'Lain-lain' : (catData.name || 'Umum'))
+                        const isThreeDots = isAdjustment || catData.emoji === '⋯' || catData.emoji === '…'
 
                         return (
                           <div
                             key={tx.id}
-                            className="flex items-center justify-between p-3.5 hover:bg-slate-100/70 dark:hover:bg-slate-800/60 transition-colors"
+                            className="flex items-center justify-between py-3.5 hover:bg-slate-50/50 dark:hover:bg-slate-800/40 transition-colors"
                           >
                             {/* Left: Icon & Category/Title */}
-                            <div className="flex items-center gap-3 min-w-0 pr-2">
+                            <div className="flex items-center gap-3.5 min-w-0 pr-2">
                               <div
-                                className={`w-10 h-10 rounded-2xl flex items-center justify-center shrink-0 text-base shadow-xs ${isTransfer
-                                    ? 'bg-purple-100 text-purple-700 dark:bg-purple-950 dark:text-purple-300'
-                                    : isIncome
-                                      ? 'bg-blue-100 text-blue-700 dark:bg-blue-950 dark:text-blue-300'
-                                      : 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300'
-                                  }`}
+                                className="w-11 h-11 rounded-full border border-slate-200/80 dark:border-slate-700/80 flex items-center justify-center shrink-0 text-base shadow-2xs bg-slate-50/60 dark:bg-slate-800/50"
                               >
                                 {isTransfer ? (
-                                  <ArrowRightLeft className="w-4 h-4" />
+                                  <ArrowRightLeft className="w-4 h-4 text-purple-600 dark:text-purple-400" />
+                                ) : isThreeDots ? (
+                                  <MoreHorizontal className="w-4 h-4 text-slate-600 dark:text-slate-300" />
                                 ) : (
                                   <span>{catData.emoji}</span>
                                 )}
                               </div>
                               <div className="min-w-0">
-                                <p className="text-sm font-semibold text-slate-900 dark:text-white truncate">
+                                <p className="text-base font-medium text-slate-900 dark:text-white truncate">
                                   {title}
                                 </p>
                                 <p className="text-xs text-slate-400 truncate mt-0.5">
@@ -569,16 +669,16 @@ export default function WalletDetailPage() {
                             {/* Right: Amount & Sisa Saldo */}
                             <div className="text-right shrink-0">
                               <p
-                                className={`text-sm sm:text-base font-bold tracking-tight ${isIncome
+                                className={`text-base font-bold tracking-tight ${isIncome
                                     ? 'text-blue-600 dark:text-blue-400'
                                     : 'text-red-500 dark:text-red-400'
                                   }`}
                               >
-                                {isIncome ? '+' : '-'}
+                                {isIncome ? '' : '-'}
                                 {formatCurrency(amt)}
                               </p>
                               {balanceAfter !== undefined && (
-                                <p className="text-[11px] text-slate-400 mt-0.5">
+                                <p className="text-xs text-slate-400 mt-0.5">
                                   saldo {formatCurrency(balanceAfter)}
                                 </p>
                               )}
@@ -588,9 +688,9 @@ export default function WalletDetailPage() {
                       })}
                     </div>
                   </div>
-                ))
-              )}
-            </div>
+                )
+              })
+            )}
           </div>
         </div>
       </div>

@@ -52,6 +52,8 @@ export const INITIAL_CATEGORIES = [
   { id: 'c-6', name: 'Salary / Income', type: 'income', monthly_limit: 0 },
   { id: 'c-7', name: 'Investment / Dividend', type: 'income', monthly_limit: 0 },
   { id: 'c-8', name: 'Savings Interest', type: 'income', monthly_limit: 0 },
+  { id: 'c-9', name: 'Lain-lain', type: 'expense', monthly_limit: 0 },
+  { id: 'c-10', name: 'Lain-lain', type: 'income', monthly_limit: 0 },
 ]
 
 export const INITIAL_TRANSACTIONS = [

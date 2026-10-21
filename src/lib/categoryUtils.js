@@ -1,5 +1,5 @@
 // Regex matching any unicode emoji or pictograph at the start of a string
-const EMOJI_PREFIX_REGEX = /^(\p{Extended_Pictographic}|\p{Emoji_Presentation})\s*/u
+const EMOJI_PREFIX_REGEX = /^(\p{Extended_Pictographic}|\p{Emoji_Presentation}|…|⋯)\s*/u
 
 export function extractCategoryEmojiAndName(categoryOrName, type = 'expense') {
   const nameStr = typeof categoryOrName === 'string'
@@ -42,6 +42,8 @@ export function extractCategoryEmojiAndName(categoryOrName, type = 'expense') {
     fallbackEmoji = '🏥'
   } else if (lower.includes('edu') || lower.includes('sekolah') || lower.includes('kuliah') || lower.includes('kursus')) {
     fallbackEmoji = '📚'
+  } else if (lower.includes('lain') || lower.includes('other') || lower.includes('adjust') || lower.includes('sesuai')) {
+    fallbackEmoji = '⋯'
   }
 
   return {
