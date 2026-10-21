@@ -15,7 +15,7 @@ export default function BottomNav() {
                       user?.email?.charAt(0)?.toUpperCase() || 'U'
 
   return (
-    <div className="md:hidden fixed bottom-4 left-4 right-4 z-50">
+    <div className="md:hidden fixed bottom-4 left-4 right-4 z-30">
       <nav className="bg-white/10 dark:bg-black/10 backdrop-blur-2xl border-t border-white/30 shadow-[0_-4px_30px_rgba(0,0,0,0.1)] rounded-3xl p-2 flex justify-around items-center">
         {navItems.map(({ to, icon: Icon, label }) => (
           <NavLink

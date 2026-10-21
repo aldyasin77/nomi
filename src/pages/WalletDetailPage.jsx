@@ -5,11 +5,10 @@ import {
   Pencil,
   ChevronLeft,
   ChevronRight,
-  TrendingDown,
-  TrendingUp,
   ArrowRightLeft,
   Wallet as WalletIcon,
   Search,
+  X,
 } from 'lucide-react'
 import { useWallets } from '@/hooks/useWallets'
 import { useTransactions } from '@/hooks/useTransactions'
@@ -25,7 +24,14 @@ import {
   DialogTitle,
   DialogDescription,
 } from '@/components/ui/dialog'
-import { Input } from '@/components/ui/input'
+import {
+  Drawer,
+  DrawerContent,
+  DrawerHeader,
+  DrawerTitle,
+  DrawerDescription,
+  DrawerClose,
+} from '@/components/ui/drawer'
 import { NumericFormat } from 'react-number-format'
 import { extractCategoryEmojiAndName } from '@/lib/categoryUtils'
 import toast from 'react-hot-toast'
@@ -618,106 +624,197 @@ export default function WalletDetailPage() {
       )}
 
       {/* ========================================================= */}
-      {/* MODAL ATUR SALDO (✎ Atur saldo)                            */}
+      {/* ATUR SALDO (Desktop: Modal Dialog | Mobile: Bottom Drawer) */}
       {/* ========================================================= */}
-      <Dialog
-        open={showAdjustBalanceModal}
-        onOpenChange={(open) => {
-          if (!open) {
-            setShowAdjustBalanceModal(false)
-            setIsNumpadOpen(false)
-          }
-        }}
-        modal={!isMobile}
-      >
-        <DialogContent
-          onInteractOutside={(e) => {
-            if (isNumpadOpen) e.preventDefault()
+      {!isMobile ? (
+        <Dialog
+          open={showAdjustBalanceModal}
+          onOpenChange={(open) => {
+            if (!open) {
+              setShowAdjustBalanceModal(false)
+              setIsNumpadOpen(false)
+            }
           }}
-          onPointerDownOutside={(e) => {
-            if (isNumpadOpen) e.preventDefault()
-          }}
-          className="max-w-md rounded-3xl p-6 bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 shadow-2xl"
         >
-          <DialogHeader className="mb-2">
-            <DialogTitle className="text-xl font-bold text-slate-900 dark:text-white">
-              Atur Saldo Dompet
-            </DialogTitle>
-            <DialogDescription className="text-xs text-slate-500">
-              Ubah saldo berjalan dompet {wallet.name}
-            </DialogDescription>
-          </DialogHeader>
+          <DialogContent className="max-w-md rounded-3xl p-6 bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 shadow-2xl">
+            <DialogHeader className="mb-2">
+              <DialogTitle className="text-xl font-bold text-slate-900 dark:text-white">
+                Atur Saldo Dompet
+              </DialogTitle>
+              <DialogDescription className="text-xs text-slate-500">
+                Ubah saldo berjalan dompet {wallet.name}
+              </DialogDescription>
+            </DialogHeader>
 
-          <form onSubmit={handleSaveBalanceAdjustment} className="space-y-4 pt-2">
-            <div className="space-y-1.5">
-              <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300">
-                Saldo Baru
-              </label>
+            <form onSubmit={handleSaveBalanceAdjustment} className="space-y-4 pt-2">
+              <div className="space-y-1.5">
+                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300">
+                  Saldo Baru
+                </label>
+                <div className="relative flex items-center rounded-2xl border-2 border-slate-200 dark:border-slate-700 bg-slate-50/70 dark:bg-slate-800/60 px-4 py-3 focus-within:border-[#1A2C4C] dark:focus-within:border-blue-400 focus-within:bg-white dark:focus-within:bg-slate-900 focus-within:ring-4 focus-within:ring-[#1A2C4C]/10 transition-all">
+                  <span className="text-2xl font-bold text-slate-400 dark:text-slate-500 mr-2 select-none">
+                    Rp
+                  </span>
+                  <NumericFormat
+                    thousandSeparator="."
+                    decimalSeparator=","
+                    allowNegative={false}
+                    value={newBalanceInput}
+                    onValueChange={(values) => {
+                      setNewBalanceInput(
+                        values.floatValue !== undefined ? values.floatValue : ''
+                      )
+                    }}
+                    placeholder="0"
+                    autoComplete="off"
+                    className="w-full text-2xl font-bold text-slate-900 dark:text-white bg-transparent border-0 outline-none p-0 tracking-tight"
+                  />
+                </div>
+              </div>
+
+              <div className="flex gap-2 pt-3">
+                <Button
+                  type="button"
+                  variant="secondary"
+                  className="flex-1 rounded-2xl"
+                  onClick={() => {
+                    setShowAdjustBalanceModal(false)
+                    setIsNumpadOpen(false)
+                  }}
+                >
+                  Batal
+                </Button>
+                <Button
+                  type="submit"
+                  loading={isAdjusting}
+                  className="flex-1 rounded-2xl bg-[#1A2C4C] hover:bg-[#13223b] text-white"
+                >
+                  Simpan Saldo
+                </Button>
+              </div>
+            </form>
+          </DialogContent>
+        </Dialog>
+      ) : (
+        <Drawer
+          open={showAdjustBalanceModal}
+          onOpenChange={(open) => {
+            if (!open) {
+              setShowAdjustBalanceModal(false)
+              setIsNumpadOpen(false)
+            }
+          }}
+        >
+          <DrawerContent
+            className="max-h-[90dvh] rounded-t-3xl border-t border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-2xl flex flex-col overflow-hidden"
+            contentWrapperClassName="relative flex-1 flex flex-col overflow-hidden p-0 pb-0"
+          >
+            <DrawerHeader className="flex flex-row items-center justify-between px-6 pt-3 pb-3 border-b border-slate-100 dark:border-slate-800 shrink-0">
+              <div>
+                <DrawerTitle className="text-lg font-bold text-slate-900 dark:text-white text-left">
+                  Atur Saldo Dompet
+                </DrawerTitle>
+                <DrawerDescription className="text-xs text-slate-500 dark:text-slate-400 mt-0.5 text-left">
+                  Ubah saldo berjalan dompet {wallet.name}
+                </DrawerDescription>
+              </div>
+              <DrawerClose asChild>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowAdjustBalanceModal(false)
+                    setIsNumpadOpen(false)
+                  }}
+                  className="p-1.5 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer"
+                  aria-label="Tutup"
+                >
+                  <X size={18} />
+                </button>
+              </DrawerClose>
+            </DrawerHeader>
+
+            <form
+              onSubmit={handleSaveBalanceAdjustment}
+              className={`flex-1 overflow-y-auto px-6 py-4 space-y-4 transition-all duration-200 ${
+                isNumpadOpen ? 'pb-96' : 'pb-6'
+              }`}
+            >
+              <div className="text-center pt-1">
+                <p className="text-xs font-medium text-slate-500 dark:text-slate-400">
+                  Masukkan saldo berjalan dompet ini
+                </p>
+              </div>
+
+              {/* Centered Large Nominal Input like TransactionForm */}
               <div
                 onClick={() => setIsNumpadOpen(true)}
-                className="relative flex items-center rounded-2xl border-2 border-slate-200 dark:border-slate-700 bg-slate-50/70 dark:bg-slate-800/60 px-4 py-3 focus-within:border-[#1A2C4C] dark:focus-within:border-blue-400 focus-within:bg-white dark:focus-within:bg-slate-900 focus-within:ring-4 focus-within:ring-[#1A2C4C]/10 transition-all cursor-pointer"
+                className="flex flex-col items-center justify-center py-2 sm:py-3 cursor-pointer group"
               >
-                <span className="text-2xl font-bold text-slate-400 dark:text-slate-500 mr-2 select-none">
-                  Rp
-                </span>
-                <NumericFormat
-                  thousandSeparator="."
-                  decimalSeparator=","
-                  allowNegative={false}
-                  value={newBalanceInput}
-                  onValueChange={(values) => {
-                    setNewBalanceInput(
-                      values.floatValue !== undefined ? values.floatValue : ''
-                    )
-                  }}
-                  placeholder="0"
-                  readOnly={true}
-                  inputMode="none"
-                  autoComplete="off"
-                  onFocus={(e) => {
-                    e.target.blur()
-                    setIsNumpadOpen(true)
-                  }}
-                  onClick={() => setIsNumpadOpen(true)}
-                  className="w-full text-2xl font-bold text-slate-900 dark:text-white bg-transparent border-0 outline-none p-0 tracking-tight cursor-pointer caret-transparent select-none focus:outline-none"
-                />
+                <div className="flex items-center justify-center gap-1.5">
+                  <span className="text-3xl sm:text-4xl font-bold text-[#1A2C4C] dark:text-blue-400">
+                    Rp
+                  </span>
+                  <NumericFormat
+                    thousandSeparator="."
+                    decimalSeparator=","
+                    allowNegative={false}
+                    value={newBalanceInput}
+                    onValueChange={(values) => {
+                      setNewBalanceInput(
+                        values.floatValue !== undefined ? values.floatValue : ''
+                      )
+                    }}
+                    placeholder="0"
+                    readOnly={true}
+                    inputMode="none"
+                    autoComplete="off"
+                    onFocus={(e) => {
+                      e.target.blur()
+                      setIsNumpadOpen(true)
+                    }}
+                    onClick={() => setIsNumpadOpen(true)}
+                    className="w-auto max-w-[280px] sm:max-w-xs text-4xl sm:text-5xl font-bold bg-transparent border-0 outline-none p-0 text-center tracking-tight cursor-pointer text-[#1A2C4C] dark:text-blue-400 caret-transparent select-none focus:outline-none"
+                  />
+                  {/* Kursor biru vertikal */}
+                  <span className="w-0.5 h-8 sm:h-10 bg-blue-600 rounded-full animate-pulse ml-0.5" />
+                </div>
               </div>
-            </div>
 
-            <div className="flex gap-2 pt-3">
-              <Button
-                type="button"
-                variant="secondary"
-                className="flex-1 rounded-2xl"
-                onClick={() => {
-                  setShowAdjustBalanceModal(false)
-                  setIsNumpadOpen(false)
-                }}
-              >
-                Batal
-              </Button>
-              <Button
-                type="submit"
-                loading={isAdjusting}
-                className="flex-1 rounded-2xl bg-[#1A2C4C] hover:bg-[#13223b] text-white"
-              >
-                Simpan Saldo
-              </Button>
-            </div>
-          </form>
-        </DialogContent>
-      </Dialog>
+              <div className="flex items-center gap-2.5 pt-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="rounded-full px-5 h-12 text-sm font-semibold border-slate-200 dark:border-slate-700 hover:bg-slate-100 text-slate-700 dark:text-slate-200"
+                  onClick={() => {
+                    setShowAdjustBalanceModal(false)
+                    setIsNumpadOpen(false)
+                  }}
+                >
+                  Batal
+                </Button>
+                <Button
+                  type="submit"
+                  loading={isAdjusting}
+                  className="flex-1 rounded-full h-12 text-sm font-bold bg-[#1A2C4C] hover:bg-[#13223b] text-white shadow-md cursor-pointer"
+                >
+                  Simpan Saldo
+                </Button>
+              </div>
+            </form>
 
-      {/* Mobile Custom Calculator Numpad for Adjust Balance Dialog */}
-      <CustomNumpad
-        isOpen={isNumpadOpen && showAdjustBalanceModal}
-        value={newBalanceInput}
-        onChange={(val) => setNewBalanceInput(val)}
-        onClose={() => setIsNumpadOpen(false)}
-        onSubmit={() => setIsNumpadOpen(false)}
-        position="fixed"
-        className="z-[9999]"
-      />
+            {/* Mobile Custom Calculator Numpad */}
+            {isNumpadOpen && (
+              <CustomNumpad
+                isOpen={true}
+                value={newBalanceInput}
+                onChange={(val) => setNewBalanceInput(val)}
+                onClose={() => setIsNumpadOpen(false)}
+                onSubmit={() => setIsNumpadOpen(false)}
+              />
+            )}
+          </DrawerContent>
+        </Drawer>
+      )}
     </div>
   )
 }

@@ -5,6 +5,7 @@ import {
   Pencil,
   ChevronRight,
   ArrowRightLeft,
+  ArrowUpDown,
   X,
   Search,
 } from 'lucide-react'
@@ -159,6 +160,25 @@ export default function TransactionForm({
 
   const handleChange = (field, value) => {
     setForm((prev) => ({ ...prev, [field]: value }))
+  }
+
+  const handleSwapWallets = (e) => {
+    e.stopPropagation()
+    try {
+      if (typeof window !== 'undefined' && 'vibrate' in navigator) {
+        navigator.vibrate(10)
+      }
+    } catch (_) {}
+
+    setForm((prev) => {
+      const currentSource = prev.wallet_id
+      const currentDest = prev.to_wallet_id || wallets.find((w) => w.id !== currentSource)?.id || ''
+      return {
+        ...prev,
+        wallet_id: currentDest,
+        to_wallet_id: currentSource,
+      }
+    })
   }
 
   // Find selected wallet and category objects
@@ -360,61 +380,31 @@ export default function TransactionForm({
 
         {/* Blok Detail (Dompet, Tanggal, Catatan) */}
         <div className="bg-slate-50 dark:bg-slate-800/60 rounded-2xl border border-slate-200/70 dark:border-slate-800 divide-y divide-slate-100 dark:divide-slate-700/60 overflow-hidden">
-          {/* Baris 1: Dompet (Source) */}
-          <div
-            onClick={() => {
-              setWalletDrawerTarget('source')
-              setWalletDrawerOpen(true)
-            }}
-            className="flex items-center justify-between p-3 hover:bg-slate-100/60 dark:hover:bg-slate-800 transition-colors cursor-pointer"
-          >
-            <div className="flex items-center gap-2.5">
-              <div className="w-7 h-7 rounded-lg bg-blue-50 dark:bg-blue-950/60 flex items-center justify-center text-blue-600 dark:text-blue-400">
-                <WalletIcon className="w-4 h-4" />
-              </div>
-              <span className="text-sm font-medium text-slate-600 dark:text-slate-300">
-                {form.type === 'transfer' ? 'Dari Dompet' : 'Dompet'}
-              </span>
-            </div>
-
-            <div className="flex items-center gap-2 min-w-0">
-              {selectedWallet && (
-                <BankItemIcon item={selectedWallet} size="sm" className="shadow-2xs" />
-              )}
-              <span className="text-sm font-semibold text-slate-800 dark:text-white truncate max-w-[120px]">
-                {selectedWallet?.name || 'Pilih dompet'}
-              </span>
-              <span className="text-[10px] font-bold uppercase px-1.5 py-0.5 rounded bg-slate-200/70 dark:bg-slate-700 text-slate-600 dark:text-slate-300">
-                IDR
-              </span>
-              <ChevronRight className="w-4 h-4 text-slate-400 shrink-0" />
-            </div>
-          </div>
-
-          {/* Baris 1b: Khusus Transfer -> Dompet Tujuan */}
-          {form.type === 'transfer' && (
+          {/* Baris 1 & 1b: Dompet (Transfer memiliki tombol switch/swap) */}
+          <div className="relative divide-y divide-slate-100 dark:divide-slate-700/60">
+            {/* Dari Dompet */}
             <div
               onClick={() => {
-                setWalletDrawerTarget('destination')
+                setWalletDrawerTarget('source')
                 setWalletDrawerOpen(true)
               }}
               className="flex items-center justify-between p-3 hover:bg-slate-100/60 dark:hover:bg-slate-800 transition-colors cursor-pointer"
             >
               <div className="flex items-center gap-2.5">
-                <div className="w-7 h-7 rounded-lg bg-indigo-50 dark:bg-indigo-950/60 flex items-center justify-center text-indigo-600 dark:text-indigo-400">
-                  <ArrowRightLeft className="w-4 h-4" />
+                <div className="w-7 h-7 rounded-lg bg-blue-50 dark:bg-blue-950/60 flex items-center justify-center text-blue-600 dark:text-blue-400">
+                  <WalletIcon className="w-4 h-4" />
                 </div>
                 <span className="text-sm font-medium text-slate-600 dark:text-slate-300">
-                  Ke Dompet
+                  {form.type === 'transfer' ? 'Dari Dompet' : 'Dompet'}
                 </span>
               </div>
 
               <div className="flex items-center gap-2 min-w-0">
-                {selectedToWallet && (
-                  <BankItemIcon item={selectedToWallet} size="sm" className="shadow-2xs" />
+                {selectedWallet && (
+                  <BankItemIcon item={selectedWallet} size="sm" className="shadow-2xs" />
                 )}
                 <span className="text-sm font-semibold text-slate-800 dark:text-white truncate max-w-[120px]">
-                  {selectedToWallet?.name || 'Pilih dompet'}
+                  {selectedWallet?.name || 'Pilih dompet'}
                 </span>
                 <span className="text-[10px] font-bold uppercase px-1.5 py-0.5 rounded bg-slate-200/70 dark:bg-slate-700 text-slate-600 dark:text-slate-300">
                   IDR
@@ -422,7 +412,55 @@ export default function TransactionForm({
                 <ChevronRight className="w-4 h-4 text-slate-400 shrink-0" />
               </div>
             </div>
-          )}
+
+            {/* Tombol Switch / Swap Dompet (Hanya saat Transfer) */}
+            {form.type === 'transfer' && (
+              <div className="absolute right-[37px] top-1/2 -translate-y-1/2 z-20">
+                <button
+                  type="button"
+                  onClick={handleSwapWallets}
+                  className="w-7 h-7 rounded-full bg-white dark:bg-slate-800 border border-slate-200/90 dark:border-slate-700 shadow-sm hover:shadow flex items-center justify-center text-slate-600 dark:text-slate-300 hover:text-blue-600 dark:hover:text-blue-400 hover:border-blue-300 dark:hover:border-blue-500 active:scale-90 active:rotate-180 transition-all duration-200 cursor-pointer"
+                  aria-label="Tukar dompet asal dan tujuan"
+                  title="Tukar pilihan dompet"
+                >
+                  <ArrowUpDown className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            )}
+
+            {/* Baris 1b: Khusus Transfer -> Dompet Tujuan */}
+            {form.type === 'transfer' && (
+              <div
+                onClick={() => {
+                  setWalletDrawerTarget('destination')
+                  setWalletDrawerOpen(true)
+                }}
+                className="flex items-center justify-between p-3 hover:bg-slate-100/60 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+              >
+                <div className="flex items-center gap-2.5">
+                  <div className="w-7 h-7 rounded-lg bg-indigo-50 dark:bg-indigo-950/60 flex items-center justify-center text-indigo-600 dark:text-indigo-400">
+                    <ArrowRightLeft className="w-4 h-4" />
+                  </div>
+                  <span className="text-sm font-medium text-slate-600 dark:text-slate-300">
+                    Ke Dompet
+                  </span>
+                </div>
+
+                <div className="flex items-center gap-2 min-w-0">
+                  {selectedToWallet && (
+                    <BankItemIcon item={selectedToWallet} size="sm" className="shadow-2xs" />
+                  )}
+                  <span className="text-sm font-semibold text-slate-800 dark:text-white truncate max-w-[120px]">
+                    {selectedToWallet?.name || 'Pilih dompet'}
+                  </span>
+                  <span className="text-[10px] font-bold uppercase px-1.5 py-0.5 rounded bg-slate-200/70 dark:bg-slate-700 text-slate-600 dark:text-slate-300">
+                    IDR
+                  </span>
+                  <ChevronRight className="w-4 h-4 text-slate-400 shrink-0" />
+                </div>
+              </div>
+            )}
+          </div>
 
           {/* Baris 2: Tanggal */}
           <Popover open={datePopoverOpen} onOpenChange={setDatePopoverOpen}>

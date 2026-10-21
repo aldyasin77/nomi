@@ -1,8 +1,19 @@
 export const changelog = [
   {
+    version: 'v1.3.2',
+    date: '21 Okt 2026',
+    isLatest: true,
+    features: [
+      'Penyempurnaan z-index Custom Numpad & Bottom Navigation untuk memastikan numpad selalu tampil di lapisan paling atas',
+      'Pembaruan modal Atur Saldo Dompet menjadi Bottom Sheet Drawer dengan tampilan nominal typography dan integrasi Custom Numpad bebas kursor native',
+      'Penyelarasan UI Form Transaksi Rutin agar konsisten dengan Form Transaksi utama (nominal besar dinamis, chip kategori, dan grouped card)',
+      'Fitur switcher/swap dompet asal dan tujuan pada transaksi bertipe Transfer yang diletakkan di sisi kanan di bawah badge IDR',
+    ],
+  },
+  {
     version: 'v1.3.1',
     date: '20 Okt 2026',
-    isLatest: true,
+    isLatest: false,
     features: [
       'Penyempurnaan interaksi mobile: pencegahan auto-zoom pada iOS Safari via viewport lock dan font input standar minimal 16px (text-base)',
       'Perbaikan Custom Numpad pada modal Detail Dompet: pemblokiran keyboard native dan penempatan numpad yang presisi di bawah drawer',
