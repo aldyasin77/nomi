@@ -16,7 +16,7 @@ export default function CustomNumpad({
   onClose,
   onSubmit,
   isOpen = true,
-  position = 'absolute', // 'absolute' (default) | 'fixed' | 'inline'
+  position = 'fixed', // 'fixed' (default) | 'inline'
   className = '',
 }) {
   const isMobile = useIsMobile()
@@ -154,15 +154,13 @@ export default function CustomNumpad({
   const positionClass =
     position === 'inline'
       ? 'w-full'
-      : position === 'fixed'
-      ? 'fixed bottom-0 left-0 w-full z-50 animate-in slide-in-from-bottom-5 duration-200'
-      : 'absolute bottom-0 left-0 w-full z-50 animate-in slide-in-from-bottom-5 duration-200'
+      : 'fixed bottom-0 left-0 w-full z-[9999] animate-in slide-in-from-bottom-5 duration-200'
 
   return (
     <div
       className={`${positionClass} bg-slate-100 dark:bg-slate-900 border-t border-slate-200/90 dark:border-slate-800 rounded-t-2xl shadow-[0_-10px_40px_rgba(0,0,0,0.1)] select-none ${className}`}
       style={
-        position === 'fixed'
+        position !== 'inline'
           ? { paddingBottom: 'max(1.5rem, env(safe-area-inset-bottom))' }
           : undefined
       }

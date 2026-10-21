@@ -674,11 +674,12 @@ export default function WalletDetailPage() {
                   readOnly={true}
                   inputMode="none"
                   autoComplete="off"
-                  onFocus={() => {
-                    if (isMobile) setIsNumpadOpen(true)
+                  onFocus={(e) => {
+                    e.target.blur()
+                    setIsNumpadOpen(true)
                   }}
                   onClick={() => setIsNumpadOpen(true)}
-                  className="w-full text-2xl font-bold text-slate-900 dark:text-white bg-transparent border-0 outline-none p-0 tracking-tight cursor-pointer"
+                  className="w-full text-2xl font-bold text-slate-900 dark:text-white bg-transparent border-0 outline-none p-0 tracking-tight cursor-pointer caret-transparent select-none focus:outline-none"
                 />
               </div>
             </div>

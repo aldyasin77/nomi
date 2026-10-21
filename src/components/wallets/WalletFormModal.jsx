@@ -455,11 +455,16 @@ export default function WalletFormModal({
             readOnly={!isDesktop}
             inputMode={!isDesktop ? 'none' : 'numeric'}
             autoComplete="off"
-            onFocus={() => {
-              if (!isDesktop) setIsNumpadOpen(true)
+            onFocus={(e) => {
+              if (!isDesktop) {
+                e.target.blur()
+                setIsNumpadOpen(true)
+              }
             }}
             onClick={() => setIsNumpadOpen(true)}
-            className="w-full text-2xl sm:text-3xl font-bold text-slate-900 dark:text-white bg-transparent border-0 outline-none p-0 tracking-tight placeholder:text-slate-300 dark:placeholder:text-slate-600 cursor-pointer sm:cursor-text"
+            className={`w-full text-2xl sm:text-3xl font-bold text-slate-900 dark:text-white bg-transparent border-0 outline-none p-0 tracking-tight placeholder:text-slate-300 dark:placeholder:text-slate-600 cursor-pointer sm:cursor-text ${
+              !isDesktop ? 'caret-transparent select-none focus:outline-none' : ''
+            }`}
           />
         </div>
       </div>
@@ -661,8 +666,6 @@ export default function WalletFormModal({
         {isNumpadOpen && (
           <CustomNumpad
             isOpen={true}
-            position="absolute"
-            className="z-50"
             value={form.balance}
             onChange={(val) => handleChange('balance', val)}
             onClose={() => setIsNumpadOpen(false)}

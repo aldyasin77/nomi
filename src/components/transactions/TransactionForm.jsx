@@ -280,10 +280,18 @@ export default function TransactionForm({
               placeholder="0"
               readOnly={isMobile}
               inputMode={isMobile ? 'none' : 'numeric'}
-              onFocus={() => {
+              onFocus={(e) => {
+                if (isMobile) {
+                  e.target.blur()
+                  setIsNumpadOpen(true)
+                }
+              }}
+              onClick={() => {
                 if (isMobile) setIsNumpadOpen(true)
               }}
-              className={`w-auto max-w-[280px] sm:max-w-xs text-4xl sm:text-5xl font-bold bg-transparent border-0 outline-none p-0 text-center tracking-tight cursor-pointer ${amountColorClass}`}
+              className={`w-auto max-w-[280px] sm:max-w-xs text-4xl sm:text-5xl font-bold bg-transparent border-0 outline-none p-0 text-center tracking-tight cursor-pointer ${amountColorClass} ${
+                isMobile ? 'caret-transparent select-none focus:outline-none' : ''
+              }`}
             />
             {/* Kursor biru vertikal */}
             <span className="w-0.5 h-8 sm:h-10 bg-blue-600 rounded-full animate-pulse ml-0.5" />
@@ -497,7 +505,6 @@ export default function TransactionForm({
       {/* ========================================================= */}
       {isMobile && isNumpadOpen && (
         <CustomNumpad
-          position="absolute"
           isOpen={true}
           value={form.amount}
           onChange={(val) => handleChange('amount', val)}
