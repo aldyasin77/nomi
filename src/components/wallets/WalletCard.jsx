@@ -1,7 +1,7 @@
 import { useNavigate } from 'react-router-dom'
-import { Wallet, Landmark, Smartphone, PiggyBank, LineChart, TrendingUp, Pencil, Trash2 } from 'lucide-react'
+import { TrendingUp, Pencil, Trash2 } from 'lucide-react'
 import { WALLET_THEMES, detectTheme } from '@/data/walletThemes'
-import { resolveBankLogo, detectBankLogo } from '@/data/bankLogos'
+import WalletLogo from './WalletLogo'
 
 const formatCurrency = (amount) => {
   return new Intl.NumberFormat('id-ID', {
@@ -10,18 +10,6 @@ const formatCurrency = (amount) => {
     minimumFractionDigits: 0,
     maximumFractionDigits: 0,
   }).format(amount)
-}
-
-const typeIcons = {
-  cash: Wallet,
-  tunai: Wallet,
-  bank: Landmark,
-  savings: PiggyBank,
-  tabungan: PiggyBank,
-  'e-wallet': Smartphone,
-  ewallet: Smartphone,
-  investment: LineChart,
-  investasi: LineChart,
 }
 
 const typeLabels = {
@@ -60,7 +48,6 @@ function getInterestProjection(balance, apr) {
  */
 export default function WalletCard({ wallet, theme, compact = false, onEdit, onDelete, className = '' }) {
   const navigate = useNavigate()
-  const DefaultWalletIcon = typeIcons[wallet.type?.toLowerCase()] || Wallet
   const typeLabel = typeLabels[wallet.type?.toLowerCase()] || wallet.type
   const balance = parseFloat(wallet.balance) || 0
   const apr = parseFloat(wallet.annual_interest_rate) || 0
@@ -71,9 +58,6 @@ export default function WalletCard({ wallet, theme, compact = false, onEdit, onD
   const themeKey = theme || wallet.card_theme || detectTheme(wallet.name)
   const themeData = WALLET_THEMES[themeKey] || WALLET_THEMES.aurora
   const isDarkText = themeData.textClass === 'text-slate-900'
-
-  // Resolve logo filename from /public/logos/
-  const logoFile = resolveBankLogo(wallet.bank_logo || detectBankLogo(wallet.name))
 
   const handleCardClick = () => {
     if (wallet?.id) {
@@ -104,17 +88,7 @@ export default function WalletCard({ wallet, theme, compact = false, onEdit, onD
         {/* Header */}
         <div className="flex items-start justify-between gap-2">
           <div className="flex items-center gap-3 min-w-0">
-            <div className={`h-11 min-w-11 px-2.5 rounded-lg ${logoFile ? 'bg-white/95 shadow-xs border border-white/40' : (isDarkText ? 'bg-black/10 border border-black/10' : 'bg-white/15 border border-white/20')} backdrop-blur-md flex items-center justify-center shrink-0 overflow-hidden`}>
-              {logoFile ? (
-                <img
-                  src={`/logos/${logoFile}`}
-                  alt={wallet.bank_logo || 'Bank Logo'}
-                  className="h-8 w-auto max-w-[56px] object-contain"
-                />
-              ) : (
-                <DefaultWalletIcon className={`h-6 w-6 ${isDarkText ? 'text-slate-900' : 'text-white/70'}`} />
-              )}
-            </div>
+            <WalletLogo className="w-10 h-10" logoId={wallet.bank_logo} name={wallet.name} />
             <div className="min-w-0">
               <p className={`text-sm font-semibold truncate ${isDarkText ? 'text-slate-900' : 'text-white/90'}`}>{wallet.name}</p>
               <p className={`text-xs ${isDarkText ? 'text-slate-600' : 'text-white/50'}`}>{typeLabel}</p>

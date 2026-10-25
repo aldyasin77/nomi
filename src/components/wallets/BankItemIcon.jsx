@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { Banknote } from 'lucide-react'
 import { resolveBankLogo, detectBankLogo } from '@/data/bankLogos'
 
 // Modern, harmonious pastel palettes for initials fallback
@@ -84,6 +85,23 @@ export default function BankItemIcon({
     },
   }
   const currentSize = sizeMap[size] || sizeMap.md
+
+  // Direct bypass for cash/tunai
+  const cleanId = String(rawIdentifier || '').toLowerCase().trim().replace(/\.(png|svg|webp|jpeg|jpg)$/i, '')
+  const cleanName = String(name || '').toLowerCase().trim()
+  const isCash = cleanId === 'tunai' || cleanId === 'cash' || cleanName === 'tunai' || cleanName === 'cash'
+
+  if (isCash) {
+    return (
+      <div
+        className={`rounded-full bg-emerald-50 text-emerald-600 dark:bg-emerald-950/60 dark:text-emerald-400 border border-emerald-200/80 dark:border-emerald-800/80 shadow-xs flex items-center justify-center shrink-0 select-none transition-transform ${currentSize.wrapper} ${className}`}
+        aria-label={name}
+        title={name}
+      >
+        <Banknote className="w-1/2 h-1/2 text-emerald-600 dark:text-emerald-400" />
+      </div>
+    )
+  }
 
   // If no source or all candidates failed (e.g. Tunai, Stockbit, Bibit), render initials
   if (hasFailedAll || sources.length === 0) {

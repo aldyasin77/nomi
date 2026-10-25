@@ -110,6 +110,9 @@ export function resolveBankLogo(logo) {
   const clean = logo.replace(/\.(png|svg|webp|jpeg|jpg)$/i, '')
   const normalized = clean.toLowerCase().replace(/[^a-z0-9]/g, '')
 
+  // Tunai and Cash do not have physical SVG files
+  if (normalized === 'tunai' || normalized === 'cash') return null
+
   const map = {
     allo: 'allo.svg',
     bca: 'bca.svg',
