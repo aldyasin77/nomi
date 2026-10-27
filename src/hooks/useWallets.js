@@ -27,11 +27,22 @@ export function useWallets() {
       return
     }
 
-    const { data, error } = await supabase
+    let { data, error } = await supabase
       .from('wallets')
       .select('*')
+      .order('sort_order', { ascending: true })
       .order('created_at', { ascending: true })
     
+    if (error && error.message && error.message.includes('sort_order')) {
+      // Graceful fallback if user has not run the SQL migration yet
+      const fallback = await supabase
+        .from('wallets')
+        .select('*')
+        .order('created_at', { ascending: true })
+      data = fallback.data
+      error = fallback.error
+    }
+
     if (error) {
       console.error('Error fetching wallets:', error)
       setWallets([])
@@ -175,6 +186,41 @@ export function useWallets() {
     setWallets(prev => prev.filter(w => w.id !== id))
   }
 
+  const reorderWallets = async (newOrderedWallets) => {
+    // Optimistic UI update
+    setWallets(newOrderedWallets)
+
+    if (isDemo) {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(newOrderedWallets))
+      return
+    }
+
+    try {
+      const updates = newOrderedWallets.map((w, index) => ({
+        id: w.id,
+        sort_order: index,
+      }))
+
+      // Batch update sort_order to Supabase
+      const { error } = await supabase
+        .from('wallets')
+        .upsert(updates, { onConflict: 'id' })
+
+      if (error) {
+        // Fallback to update per wallet in case upsert requires all columns
+        await Promise.all(
+          updates.map(({ id, sort_order }) =>
+            supabase.from('wallets').update({ sort_order }).eq('id', id)
+          )
+        )
+      }
+    } catch (err) {
+      console.error('Failed to save wallet order to Supabase:', err)
+      fetchWallets()
+      throw err
+    }
+  }
+
   const totalBalance = wallets.reduce((sum, w) => sum + (parseFloat(w.balance) || 0), 0)
 
   return {
@@ -184,6 +230,7 @@ export function useWallets() {
     addWallet,
     updateWallet,
     deleteWallet,
+    reorderWallets,
     refetch: fetchWallets,
   }
 }

@@ -1,8 +1,24 @@
 export const changelog = [
   {
+    version: 'v1.3.3',
+    date: '27 Okt 2026',
+    isLatest: true,
+    features: [
+      'Fitur Drag & Drop Re-arrange Dompet: Atur urutan tampilan kartu dompet dengan mudah menggunakan drag handle khusus dan tersimpan permanen ke database',
+      'Analitik Pertumbuhan Saldo MoM (Month-over-Month): Indikator persentase perubahan saldo bulanan dinamis di Beranda Desktop dan Mobile',
+      'Kalkulasi Akumulasi Bunga: Tampilan akumulasi total nominal bunga yang telah diterima langsung pada kartu dompet berbunga (APR > 0%)',
+      'Integrasi Emoji Picker Modern: Pemilihan emoji kategori dan dompet kini menggunakan library eksternal yang interaktif dengan kategori lengkap dan pencarian cepat',
+      'Perhitungan Akurat Saldo Berjalan: Algoritma kalkulasi mundur (reverse calculation) dari saldo aktual pada riwayat transaksi Detail Dompet',
+      'Sinkronisasi Zona Waktu WIB: Penguncian zona waktu Asia/Jakarta pada format tanggal agar label relatif ("Hari ini" & "Kemarin") selalu presisi',
+      'Penyempurnaan Form Dompet: Penonaktifkan auto-detect ikon/tema saat mengetik nama dompet untuk kebebasan kustomisasi penuh',
+      'Perbaikan Form Transaksi Rutin: Perbaikan layout modal desktop, sanitasi UUID kosong, dan penyesuaian constraint tipe transaksi database',
+      'Konsistensi Visibilitas Tombol Aksi: Ikon Edit dan Hapus pada daftar kategori dan kartu dompet kini selalu tampil konsisten di layar Desktop maupun Mobile',
+    ],
+  },
+  {
     version: 'v1.3.2',
     date: '21 Okt 2026',
-    isLatest: true,
+    isLatest: false,
     features: [
       'Penyempurnaan z-index Custom Numpad & Bottom Navigation untuk memastikan numpad selalu tampil di lapisan paling atas',
       'Pembaruan modal Atur Saldo Dompet menjadi Bottom Sheet Drawer dengan tampilan nominal typography dan integrasi Custom Numpad bebas kursor native',

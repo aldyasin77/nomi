@@ -1,6 +1,7 @@
 import { useNavigate } from 'react-router-dom'
-import { TrendingUp, Pencil, Trash2 } from 'lucide-react'
+import { TrendingUp, Pencil, Trash2, GripVertical } from 'lucide-react'
 import { WALLET_THEMES, detectTheme } from '@/data/walletThemes'
+import { calculateTotalInterest } from '@/lib/analyticsUtils'
 import WalletLogo from './WalletLogo'
 
 const formatCurrency = (amount) => {
@@ -46,13 +47,28 @@ function getInterestProjection(balance, apr) {
  * @param {function} onEdit    Called when edit button is clicked
  * @param {function} onDelete  Called when delete button is clicked
  */
-export default function WalletCard({ wallet, theme, compact = false, onEdit, onDelete, className = '' }) {
+export default function WalletCard({
+  wallet,
+  theme,
+  compact = false,
+  onEdit,
+  onDelete,
+  dragHandleProps = null,
+  transactions = [],
+  totalInterest: propTotalInterest,
+  className = '',
+}) {
   const navigate = useNavigate()
   const typeLabel = typeLabels[wallet.type?.toLowerCase()] || wallet.type
   const balance = parseFloat(wallet.balance) || 0
   const apr = parseFloat(wallet.annual_interest_rate) || 0
   const isSavings = wallet.type?.toLowerCase() === 'savings'
   const interestProjection = isSavings ? getInterestProjection(balance, apr) : 0
+
+  const totalInterest =
+    propTotalInterest !== undefined
+      ? propTotalInterest
+      : calculateTotalInterest(wallet.id, transactions)
 
   // Resolve theme: explicit prop > wallet.card_theme > auto-detect
   const themeKey = theme || wallet.card_theme || detectTheme(wallet.name)
@@ -96,30 +112,46 @@ export default function WalletCard({ wallet, theme, compact = false, onEdit, onD
           </div>
 
           {/* Actions — hidden in compact mode, visible on both mobile & desktop */}
-          {!compact && onEdit && onDelete && (
-            <div className="flex items-center gap-2 shrink-0">
-              <button
-                type="button"
-                onClick={(e) => {
-                  e.stopPropagation()
-                  onEdit(wallet)
-                }}
-                className={`p-2 rounded-lg ${isDarkText ? 'bg-black/10 hover:bg-black/20' : 'bg-white/10 hover:bg-white/20'} transition-colors cursor-pointer`}
-                aria-label="Edit wallet"
-              >
-                <Pencil size={14} className={isDarkText ? 'text-slate-800' : 'text-white'} />
-              </button>
-              <button
-                type="button"
-                onClick={(e) => {
-                  e.stopPropagation()
-                  onDelete(wallet)
-                }}
-                className={`p-2 rounded-lg ${isDarkText ? 'bg-black/10 hover:bg-rose-500/50' : 'bg-white/10 hover:bg-rose-500/50'} transition-colors cursor-pointer`}
-                aria-label="Delete wallet"
-              >
-                <Trash2 size={14} className={isDarkText ? 'text-slate-800' : 'text-white'} />
-              </button>
+          {!compact && (onEdit || onDelete || dragHandleProps) && (
+            <div className="flex items-center gap-1.5 shrink-0">
+              {onEdit && (
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    onEdit(wallet)
+                  }}
+                  className={`p-2 rounded-lg ${isDarkText ? 'bg-black/10 hover:bg-black/20' : 'bg-white/10 hover:bg-white/20'} transition-colors cursor-pointer`}
+                  aria-label="Edit wallet"
+                >
+                  <Pencil size={14} className={isDarkText ? 'text-slate-800' : 'text-white'} />
+                </button>
+              )}
+              {onDelete && (
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    onDelete(wallet)
+                  }}
+                  className={`p-2 rounded-lg ${isDarkText ? 'bg-black/10 hover:bg-rose-500/50' : 'bg-white/10 hover:bg-rose-500/50'} transition-colors cursor-pointer`}
+                  aria-label="Delete wallet"
+                >
+                  <Trash2 size={14} className={isDarkText ? 'text-slate-800' : 'text-white'} />
+                </button>
+              )}
+              {dragHandleProps && (
+                <button
+                  type="button"
+                  {...dragHandleProps}
+                  onClick={(e) => e.stopPropagation()}
+                  className={`p-2 rounded-lg cursor-grab active:cursor-grabbing touch-none ${isDarkText ? 'bg-black/10 hover:bg-black/20' : 'bg-white/10 hover:bg-white/20'} transition-colors`}
+                  aria-label="Geser urutan dompet"
+                  title="Geser untuk ubah urutan"
+                >
+                  <GripVertical size={14} className={isDarkText ? 'text-slate-800' : 'text-white'} />
+                </button>
+              )}
             </div>
           )}
         </div>
@@ -135,16 +167,22 @@ export default function WalletCard({ wallet, theme, compact = false, onEdit, onD
 
           {/* Interest info for Wallets with APR */}
           {apr > 0 && (
-            <div className={`mt-2 pt-2 border-t ${isDarkText ? 'border-black/10' : 'border-white/10'} flex items-center justify-between text-xs`}>
-              <div className={`flex items-center gap-1.5 ${isDarkText ? 'text-white/90' : 'text-white/90'}`}>
-                <TrendingUp size={13} />
-                <span className="font-medium text-[11px]">Bunga {apr}%/thn</span>
+            <div className={`mt-2 pt-2 border-t ${isDarkText ? 'border-black/10' : 'border-white/10'} space-y-1`}>
+              <div className="flex items-center justify-between text-xs">
+                <div className={`flex items-center gap-1.5 ${isDarkText ? 'text-slate-800' : 'text-white/90'}`}>
+                  <TrendingUp size={13} />
+                  <span className="font-medium text-[11px]">Bunga {apr}%/thn</span>
+                </div>
+                {wallet.interest_payout_date && (
+                  <span className={`${isDarkText ? 'text-slate-700 bg-black/10' : 'text-white/80 bg-white/15'} px-2 py-0.5 rounded-full font-semibold text-[10px]`}>
+                    Cair tgl {wallet.interest_payout_date}
+                  </span>
+                )}
               </div>
-              {wallet.interest_payout_date && (
-                <span className={`${isDarkText ? 'text-slate-700 bg-black/10' : 'text-white/80 bg-white/15'} px-2 py-0.5 rounded-full font-semibold text-[10px]`}>
-                  Cair tgl {wallet.interest_payout_date}
-                </span>
-              )}
+              <div className={`text-xs font-medium flex items-center justify-between pt-0.5 ${isDarkText ? 'text-emerald-700 dark:text-emerald-400' : 'text-emerald-100/90'}`}>
+                <span>Total Bunga:</span>
+                <span className="font-semibold">+{formatCurrency(totalInterest)}</span>
+              </div>
             </div>
           )}
         </div>

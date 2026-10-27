@@ -9,8 +9,10 @@ import {
   Eye,
   EyeOff,
   TrendingUp,
+  TrendingDown,
   ChevronRight,
 } from 'lucide-react'
+import { calculateBalanceGrowth } from '@/lib/analyticsUtils'
 import { useAuth } from '@/context/AuthContext'
 import { useWallets } from '@/hooks/useWallets'
 import { useCategories } from '@/hooks/useCategories'
@@ -139,6 +141,11 @@ export default function DashboardPage() {
     .filter(t => t.type === 'income')
     .reduce((sum, t) => sum + (parseFloat(t.amount) || 0), 0)
 
+  // Month-over-Month balance growth calculation
+  const balanceGrowth = useMemo(() => {
+    return calculateBalanceGrowth(totalBalance, monthTransactions)
+  }, [totalBalance, monthTransactions])
+
   const handleAddTransaction = async (payload) => {
     try {
       await addTransaction(payload)
@@ -237,9 +244,24 @@ export default function DashboardPage() {
               {showBalance ? formatCurrency(totalBalance) : 'Rp ••••••••'}
             </p>
             <div className="flex items-center gap-1.5 mt-1.5">
-              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-400/15 text-emerald-300 text-[10px] font-semibold border border-emerald-400/15">
-                <TrendingUp size={10} />
-                <span>+3.4% bulan ini</span>
+              <span
+                className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold border ${
+                  balanceGrowth > 0
+                    ? 'bg-emerald-400/15 text-emerald-300 border-emerald-400/20'
+                    : balanceGrowth < 0
+                    ? 'bg-red-400/15 text-red-300 border-red-400/20'
+                    : 'bg-white/10 text-white/70 border-white/10'
+                }`}
+              >
+                {balanceGrowth > 0 ? (
+                  <TrendingUp size={10} className="text-emerald-400" />
+                ) : balanceGrowth < 0 ? (
+                  <TrendingDown size={10} className="text-red-400" />
+                ) : null}
+                <span>
+                  {balanceGrowth > 0 ? '+' : balanceGrowth < 0 ? '-' : ''}
+                  {Math.abs(balanceGrowth).toFixed(1)}% bulan ini
+                </span>
               </span>
             </div>
           </div>
@@ -257,7 +279,11 @@ export default function DashboardPage() {
                       className="flex-[0_0_85%] min-w-0"
                       style={{ maxWidth: '340px' }}
                     >
-                      <WalletCard wallet={wallet} compact />
+                      <WalletCard
+                        wallet={wallet}
+                        compact
+                        transactions={trendTransactions || monthTransactions}
+                      />
                     </div>
                   ))}
                   {/* "Add Wallet" ghost card */}
@@ -388,6 +414,7 @@ export default function DashboardPage() {
           totalExpenses={totalExpenses}
           totalBudgetRemaining={totalRemaining}
           totalIncome={totalIncome}
+          balanceGrowth={balanceGrowth}
         />
 
         {/* Charts Row */}

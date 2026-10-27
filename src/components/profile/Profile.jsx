@@ -205,7 +205,7 @@ export default function Profile({ onOpenCategoryConfig }) {
                 <div className="flex items-center gap-2">
                   {notifications.length > 0 && (
                     <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-100 text-amber-800">
-                      {notifications.length} aktif
+                      {notifications.length}
                     </span>
                   )}
                   <ChevronRight size={18} className="text-slate-300 group-hover:text-slate-600 transition-colors" />

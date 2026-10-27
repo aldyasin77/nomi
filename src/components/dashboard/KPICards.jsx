@@ -10,7 +10,17 @@ const formatCurrency = (amount) => {
   }).format(amount)
 }
 
-export default function KPICards({ totalBalance, totalExpenses, totalBudgetRemaining, totalIncome }) {
+export default function KPICards({
+  totalBalance,
+  totalExpenses,
+  totalBudgetRemaining,
+  totalIncome,
+  balanceGrowth = 0,
+}) {
+  const isPositive = balanceGrowth > 0
+  const isNegative = balanceGrowth < 0
+  const growthFormatted = `${isPositive ? '+' : isNegative ? '-' : ''}${Math.abs(balanceGrowth).toFixed(1)}%`
+
   const cards = [
     {
       label: 'Total Balance',
@@ -18,7 +28,11 @@ export default function KPICards({ totalBalance, totalExpenses, totalBudgetRemai
       icon: Wallet,
       color: 'text-[#1A2C4C]',
       bgColor: 'bg-[#1A2C4C]/5',
-      trend: null,
+      trend: {
+        value: `${growthFormatted} MoM`,
+        isPositive,
+        isNegative,
+      },
     },
     {
       label: 'Income This Month',
@@ -57,6 +71,24 @@ export default function KPICards({ totalBalance, totalExpenses, totalBudgetRemai
             <div className={`w-10 h-10 rounded-xl ${card.bgColor} flex items-center justify-center`}>
               <card.icon size={18} className={card.color} />
             </div>
+            {card.trend && (
+              <span
+                className={`inline-flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full ${
+                  card.trend.isPositive
+                    ? 'bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-400'
+                    : card.trend.isNegative
+                    ? 'bg-rose-50 text-rose-600 dark:bg-rose-950/40 dark:text-rose-400'
+                    : 'bg-slate-50 text-slate-500 dark:bg-slate-800 dark:text-slate-400'
+                }`}
+              >
+                {card.trend.isPositive ? (
+                  <TrendingUp size={13} className="text-emerald-500" />
+                ) : card.trend.isNegative ? (
+                  <TrendingDown size={13} className="text-red-500" />
+                ) : null}
+                <span>{card.trend.value}</span>
+              </span>
+            )}
           </div>
           <p className="text-sm text-slate-500 font-medium mb-1">{card.label}</p>
           <p className={`text-2xl font-bold tracking-tight ${card.color}`}>

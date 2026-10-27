@@ -31,7 +31,6 @@ import {
   WALLET_GROUPS,
   ALL_WALLET_ITEMS,
   resolveBankLogo,
-  detectBankLogo,
 } from '@/data/bankLogos'
 import BankItemIcon from './BankItemIcon'
 import CustomNumpad from '@/components/common/CustomNumpad'
@@ -194,21 +193,10 @@ export default function WalletFormModal({
   }
 
   const handleChange = (field, value) => {
-    setForm((prev) => {
-      const next = { ...prev, [field]: value }
-      if (field === 'name') {
-        if (!prev._themeManuallySet) {
-          next.card_theme = detectTheme(value)
-        }
-        if (!prev._bankLogoManuallySet) {
-          const detected = detectBankLogo(value)
-          if (detected) {
-            next.bank_logo = detected
-          }
-        }
-      }
-      return next
-    })
+    setForm((prev) => ({
+      ...prev,
+      [field]: value,
+    }))
   }
 
   const handleInterestToggle = (checked) => {
