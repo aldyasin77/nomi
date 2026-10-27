@@ -237,7 +237,7 @@ FOR EACH ROW EXECUTE FUNCTION public.handle_new_user_default_categories();
 CREATE TABLE IF NOT EXISTS public.recurring_transactions (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE DEFAULT auth.uid(),
-    type TEXT NOT NULL CHECK (type IN ('income', 'expense', 'transfer')),
+    type TEXT NOT NULL CHECK (type IN ('Income', 'Expense', 'Transfer', 'income', 'expense', 'transfer')),
     amount NUMERIC(15, 2) NOT NULL CHECK (amount > 0),
     execution_day NUMERIC(2, 0) NOT NULL CHECK (execution_day >= 1 AND execution_day <= 31),
     wallet_id UUID REFERENCES public.wallets(id) ON DELETE CASCADE,

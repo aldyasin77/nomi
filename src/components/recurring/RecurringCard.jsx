@@ -31,6 +31,14 @@ export default function RecurringCard({
   const wallet = wallets.find((w) => w.id === item.wallet_id)
   const category = categories.find((c) => c.id === item.category_id)
 
+  const normalizedType = (() => {
+    const raw = String(item.type || 'expense').toLowerCase().trim()
+    if (raw === 'pengeluaran') return 'expense'
+    if (raw === 'pemasukan') return 'income'
+    if (raw === 'transfer') return 'transfer'
+    return raw
+  })()
+
   const typeConfig = {
     expense: {
       label: 'Pengeluaran',
@@ -56,7 +64,14 @@ export default function RecurringCard({
       amountSign: '',
       amountColor: 'text-indigo-900',
     },
-  }[item.type || 'expense']
+  }[normalizedType] || {
+    label: 'Pengeluaran',
+    icon: TrendingDown,
+    color: 'text-rose-600 bg-rose-50 border-rose-100',
+    badgeColor: 'text-rose-700 bg-rose-50 border-rose-100/80',
+    amountSign: '- ',
+    amountColor: 'text-rose-600',
+  }
 
   const Icon = typeConfig.icon
 

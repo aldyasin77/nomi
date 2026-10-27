@@ -49,9 +49,10 @@ export default function RecurringPage() {
     recurringList.forEach((item) => {
       if (item.is_active) {
         activeCount += 1
-        if (item.type === 'expense') {
+        const type = (item.type || '').toLowerCase()
+        if (type === 'expense' || type === 'pengeluaran') {
           monthlyExpense += Number(item.amount) || 0
-        } else if (item.type === 'income') {
+        } else if (type === 'income' || type === 'pemasukan') {
           monthlyIncome += Number(item.amount) || 0
         }
       }
@@ -63,7 +64,11 @@ export default function RecurringPage() {
   // Filtered list
   const filteredList = useMemo(() => {
     if (filterType === 'all') return recurringList
-    return recurringList.filter((item) => item.type === filterType)
+    return recurringList.filter((item) => {
+      const type = (item.type || '').toLowerCase()
+      const normalized = type === 'pengeluaran' ? 'expense' : type === 'pemasukan' ? 'income' : type
+      return normalized === filterType
+    })
   }, [recurringList, filterType])
 
   const handleOpenAdd = () => {
@@ -77,22 +82,49 @@ export default function RecurringPage() {
   }
 
   const handleModalSubmit = async (data) => {
+    let mappedType = data.type // 'type' dari state UI (misal: 'Pengeluaran')
+
+    if (data.type.toLowerCase() === 'pengeluaran' || data.type.toLowerCase() === 'expense') {
+      mappedType = 'Expense'
+    } else if (data.type.toLowerCase() === 'pemasukan' || data.type.toLowerCase() === 'income') {
+      mappedType = 'Income'
+    } else if (data.type.toLowerCase() === 'transfer') {
+      mappedType = 'Transfer'
+    }
+
+    const sanitizeUuid = (val) => {
+      if (!val || typeof val !== 'string' || val.trim() === '') return null
+      return val.trim()
+    }
+
+    const payload = {
+      ...data,
+      type: mappedType,
+      wallet_id: sanitizeUuid(data.wallet_id),
+      category_id: mappedType === 'Transfer' ? null : sanitizeUuid(data.category_id),
+      to_wallet_id: mappedType === 'Transfer' ? sanitizeUuid(data.to_wallet_id) : null,
+    }
+
     try {
       if (editingItem) {
-        await updateRecurring(editingItem.id, data)
-        if (data.is_active) {
+        if (!editingItem.id || typeof editingItem.id !== 'string' || editingItem.id.trim() === '') {
+          toast.error('ID transaksi tidak valid untuk diperbarui')
+          return
+        }
+        await updateRecurring(editingItem.id.trim(), payload)
+        if (payload.is_active) {
           toast.success(
-            `Notifikasi aktif: Pengingat "${data.note}" setiap tgl ${data.execution_day} telah diperbarui!`,
+            `Notifikasi aktif: Pengingat "${payload.note}" setiap tgl ${payload.execution_day} telah diperbarui!`,
             { icon: '🔔' }
           )
         } else {
           toast.success('Transaksi rutin diperbarui (status nonaktif).')
         }
       } else {
-        await addRecurring(data)
-        if (data.is_active) {
+        await addRecurring(payload)
+        if (payload.is_active) {
           toast.success(
-            `Transaksi rutin dibuat & notifikasi aktif untuk "${data.note}" setiap tgl ${data.execution_day}!`,
+            `Transaksi rutin dibuat & notifikasi aktif untuk "${payload.note}" setiap tgl ${payload.execution_day}!`,
             { icon: '🔔' }
           )
         } else {

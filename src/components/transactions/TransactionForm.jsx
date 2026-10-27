@@ -29,6 +29,7 @@ import BankItemIcon from '@/components/wallets/BankItemIcon'
 import CustomNumpad from '@/components/common/CustomNumpad'
 import { useIsMobile } from '@/hooks/useIsMobile'
 import { extractCategoryEmojiAndName } from '@/lib/categoryUtils'
+import { getJakartaDate, getJakartaDateKey, INDONESIAN_SHORT_MONTHS } from '@/lib/dateUtils'
 import { useNavigate } from 'react-router-dom'
 
 const TRANSACTION_TYPES = [
@@ -48,26 +49,20 @@ const formatCurrency = (amount) => {
 
 function formatDisplayDate(dateStr) {
   if (!dateStr) return 'Pilih Tanggal'
-  const date = new Date(dateStr + 'T00:00:00')
-  const today = new Date()
-  const yesterday = new Date(today)
-  yesterday.setDate(yesterday.getDate() - 1)
+  const date = getJakartaDate(dateStr)
+  const today = getJakartaDate(new Date())
 
-  const dateDateString = date.toISOString().split('T')[0]
-  const todayDateString = today.toISOString().split('T')[0]
-  const yesterdayDateString = yesterday.toISOString().split('T')[0]
+  const dTx = new Date(date.getFullYear(), date.getMonth(), date.getDate())
+  const dToday = new Date(today.getFullYear(), today.getMonth(), today.getDate())
 
-  const monthsShort = [
-    'Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun',
-    'Jul', 'Agt', 'Sep', 'Okt', 'Nov', 'Des'
-  ]
+  const diffDays = Math.round((dToday.getTime() - dTx.getTime()) / (1000 * 60 * 60 * 24))
   const day = date.getDate()
-  const month = monthsShort[date.getMonth()]
+  const month = INDONESIAN_SHORT_MONTHS[date.getMonth()]
 
-  if (dateDateString === todayDateString) {
+  if (diffDays === 0) {
     return `Hari ini, ${day} ${month}`
   }
-  if (dateDateString === yesterdayDateString) {
+  if (diffDays === 1) {
     return `Kemarin, ${day} ${month}`
   }
 
@@ -102,7 +97,7 @@ export default function TransactionForm({
   const [form, setForm] = useState({
     type: initialTab || initialType || 'expense',
     amount: '',
-    transaction_date: new Date().toISOString().split('T')[0],
+    transaction_date: getJakartaDateKey(new Date()),
     wallet_id: initialWalletId || (wallets[0]?.id || ''),
     to_wallet_id: '',
     category_id: '',
@@ -256,8 +251,8 @@ export default function TransactionForm({
       {/* ========================================================= */}
       <div
         className={`flex-1 overflow-y-auto p-4 space-y-4 transition-all duration-200 ${
-          isMobile && isNumpadOpen ? 'pb-96' : 'pb-4'
-        }`}
+          isNumpadOpen ? 'max-md:pb-[300px]' : 'max-md:pb-4'
+        } md:pb-4`}
       >
         {/* Switcher Tipe Transaksi (Paling Atas) */}
         <div className="w-full bg-slate-100 dark:bg-slate-800 p-1 rounded-full flex gap-1">
@@ -282,11 +277,13 @@ export default function TransactionForm({
 
         {/* Nominal Input (Tengah) */}
         <div
-          onClick={() => setIsNumpadOpen(true)}
-          className="flex flex-col items-center justify-center py-2 sm:py-4 cursor-pointer group"
+          onClick={() => {
+            if (isMobile) setIsNumpadOpen(true)
+          }}
+          className="flex flex-col items-center justify-center w-full py-2 sm:py-4 cursor-pointer group"
         >
-          <div className="flex items-center justify-center gap-1.5">
-            <span className={`text-3xl sm:text-4xl font-bold ${amountColorClass}`}>
+          <div className="flex justify-center items-center w-full gap-2">
+            <span className={`text-3xl sm:text-4xl font-bold shrink-0 ${amountColorClass}`}>
               Rp
             </span>
             <NumericFormat
@@ -309,12 +306,12 @@ export default function TransactionForm({
               onClick={() => {
                 if (isMobile) setIsNumpadOpen(true)
               }}
-              className={`w-auto max-w-[280px] sm:max-w-xs text-4xl sm:text-5xl font-bold bg-transparent border-0 outline-none p-0 text-center tracking-tight cursor-pointer ${amountColorClass} ${
+              className={`text-center w-full max-w-[240px] sm:max-w-xs text-4xl sm:text-5xl font-bold bg-transparent border-0 outline-none p-0 tracking-tight cursor-pointer ${amountColorClass} ${
                 isMobile ? 'caret-transparent select-none focus:outline-none' : ''
               }`}
             />
             {/* Kursor biru vertikal */}
-            <span className="w-0.5 h-8 sm:h-10 bg-blue-600 rounded-full animate-pulse ml-0.5" />
+            <span className="w-0.5 h-8 sm:h-10 bg-blue-600 rounded-full animate-pulse ml-0.5 md:hidden" />
           </div>
 
           {/* Subtitle di bawah nominal */}
@@ -516,13 +513,13 @@ export default function TransactionForm({
           </div>
         </div>
 
-        {/* 5. Tombol Action (Batal & Simpan - Berada di dalam area scroll paling bawah) */}
-        <div className="flex items-center gap-2.5 pt-2">
+        {/* 5. Tombol Action (Batal & Simpan) */}
+        <div className="flex justify-end gap-3 pt-4 border-t border-slate-100 dark:border-slate-800 mt-auto bg-white dark:bg-slate-900 shrink-0">
           <Button
             type="button"
             variant="outline"
             onClick={onClose}
-            className="rounded-full px-5 h-12 text-sm font-semibold border-slate-200 dark:border-slate-700 hover:bg-slate-100 text-slate-700 dark:text-slate-200"
+            className="rounded-full px-5 h-11 text-sm font-semibold border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200"
           >
             Batal
           </Button>
@@ -531,7 +528,7 @@ export default function TransactionForm({
             onClick={handleSubmit}
             loading={loading}
             disabled={!form.amount || parseFloat(form.amount) <= 0}
-            className="flex-1 rounded-full h-12 text-sm font-bold bg-[#1A2C4C] hover:bg-[#13223b] text-white shadow-md cursor-pointer disabled:opacity-40"
+            className="rounded-full px-6 h-11 text-sm font-bold bg-[#1A2C4C] hover:bg-[#13223b] text-white shadow-md cursor-pointer disabled:opacity-40"
           >
             {submitButtonLabel}
           </Button>
@@ -542,13 +539,15 @@ export default function TransactionForm({
       {/* 2. CUSTOM NUMPAD (Absolute Overlay di bagian bawah)       */}
       {/* ========================================================= */}
       {isMobile && isNumpadOpen && (
-        <CustomNumpad
-          isOpen={true}
-          value={form.amount}
-          onChange={(val) => handleChange('amount', val)}
-          onClose={() => setIsNumpadOpen(false)}
-          onSubmit={() => setIsNumpadOpen(false)}
-        />
+        <div className="md:hidden">
+          <CustomNumpad
+            isOpen={true}
+            value={form.amount}
+            onChange={(val) => handleChange('amount', val)}
+            onClose={() => setIsNumpadOpen(false)}
+            onSubmit={() => setIsNumpadOpen(false)}
+          />
+        </div>
       )}
 
       {/* ========================================================= */}

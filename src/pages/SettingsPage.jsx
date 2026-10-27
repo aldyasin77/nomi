@@ -103,11 +103,11 @@ export default function SettingsPage() {
                   </div>
                 </div>
 
-              <div className="flex gap-1 opacity-90 sm:opacity-0 group-hover:opacity-100 transition-opacity">
+              <div className="flex items-center gap-1 shrink-0 text-slate-400">
                 <button
                   type="button"
                   onClick={() => handleEdit(category)}
-                  className="p-2 rounded-xl hover:bg-slate-100 transition-colors text-slate-400 hover:text-slate-600 cursor-pointer"
+                  className="p-2 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer"
                   aria-label="Edit category"
                 >
                   <Pencil size={15} />
@@ -115,7 +115,7 @@ export default function SettingsPage() {
                 <button
                   type="button"
                   onClick={() => handleDelete(category)}
-                  className="p-2 rounded-xl hover:bg-rose-50 transition-colors text-slate-400 hover:text-rose-500 cursor-pointer"
+                  className="p-2 rounded-xl hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors text-slate-400 hover:text-rose-500 cursor-pointer"
                   aria-label="Delete category"
                 >
                   <Trash2 size={15} />

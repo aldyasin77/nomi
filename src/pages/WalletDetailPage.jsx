@@ -40,49 +40,22 @@ import { extractCategoryEmojiAndName } from '@/lib/categoryUtils'
 import toast from 'react-hot-toast'
 import CustomNumpad from '@/components/common/CustomNumpad'
 import { useIsMobile } from '@/hooks/useIsMobile'
-
-const INDONESIAN_MONTHS = [
-  'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
-  'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'
-]
+import {
+  INDONESIAN_MONTHS,
+  formatDateHeader,
+  groupTransactionsByDate,
+  getJakartaDate,
+  getJakartaDateKey,
+} from '@/lib/dateUtils'
 
 const formatCurrency = (amount) => {
+  const cleanAmount = Math.abs(amount) < 0.0001 ? 0 : Number(amount)
   return new Intl.NumberFormat('id-ID', {
     style: 'currency',
     currency: 'IDR',
     minimumFractionDigits: 0,
     maximumFractionDigits: 0,
-  }).format(amount)
-}
-
-function formatDateHeader(dateStr) {
-  if (!dateStr) return ''
-  const date = new Date(dateStr)
-  const today = new Date()
-  const yesterday = new Date(today)
-  yesterday.setDate(yesterday.getDate() - 1)
-
-  const dateDateString = date.toISOString().split('T')[0]
-  const todayDateString = today.toISOString().split('T')[0]
-  const yesterdayDateString = yesterday.toISOString().split('T')[0]
-
-  if (dateDateString === todayDateString) return 'Hari ini'
-  if (dateDateString === yesterdayDateString) return 'Kemarin'
-
-  const days = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu']
-  const shortMonths = [
-    'Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun',
-    'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'
-  ]
-  const dayName = days[date.getDay()]
-  const dayNum = date.getDate()
-  const monthName = shortMonths[date.getMonth()]
-  const year = date.getFullYear()
-
-  if (year === today.getFullYear()) {
-    return `${dayName}, ${dayNum} ${monthName}`
-  }
-  return `${dayName}, ${dayNum} ${monthName} ${year}`
+  }).format(cleanAmount)
 }
 
 export default function WalletDetailPage() {
@@ -99,8 +72,8 @@ export default function WalletDetailPage() {
     return wallets.find((w) => w.id === id) || null
   }, [wallets, id])
 
-  // State for Month Filter (defaults to current date)
-  const [currentDate, setCurrentDate] = useState(() => new Date())
+  // State for Month Filter (defaults to current date in Asia/Jakarta)
+  const [currentDate, setCurrentDate] = useState(() => getJakartaDate(new Date()))
   const selectedYear = currentDate.getFullYear()
   const selectedMonth = currentDate.getMonth() // 0-indexed
 
@@ -142,8 +115,9 @@ export default function WalletDetailPage() {
     let expense = 0
 
     walletTransactionsAll.forEach((t) => {
-      if (!t.transaction_date) return
-      const tDate = new Date(t.transaction_date)
+      const rawDate = t.transaction_date || t.created_at
+      if (!rawDate) return
+      const tDate = getJakartaDate(rawDate)
       if (tDate.getFullYear() === selectedYear && tDate.getMonth() === selectedMonth) {
         const amt = parseFloat(t.amount) || 0
         if (t.type === 'income' && t.wallet_id === wallet.id) {
@@ -163,47 +137,43 @@ export default function WalletDetailPage() {
     return { income, expense }
   }, [wallet, walletTransactionsAll, selectedYear, selectedMonth])
 
-  // Calculate historical running balances for each transaction
-  // Sort transactions chronologically ascending to compute running balances,
-  // then map back to each transaction.
+  // Algoritma Kalkulasi Mundur (Reverse Calculation):
+  // Menggunakan saldo dompet saat ini (wallet.balance) sebagai titik awal perhitungan,
+  // lalu memundurkan saldo per transaksi dari yang terbaru ke terlama (descending).
   const runningBalancesMap = useMemo(() => {
     if (!wallet) return {}
 
-    // Sort ascending by date & created_at
-    const sortedAsc = [...walletTransactionsAll].sort((a, b) => {
-      const dateA = new Date(a.transaction_date || a.created_at).getTime()
-      const dateB = new Date(b.transaction_date || b.created_at).getTime()
-      return dateA - dateB
+    // Sort descending by date & created_at (terbaru di atas, indeks 0 ke n)
+    const sortedDesc = [...walletTransactionsAll].sort((a, b) => {
+      const rawA = a.transaction_date || a.created_at
+      const rawB = b.transaction_date || b.created_at
+      const dateA = rawA ? new Date(rawA).getTime() : 0
+      const dateB = rawB ? new Date(rawB).getTime() : 0
+      return dateB - dateA
     })
 
-    // Compute cumulative delta
-    let netDeltaTotal = 0
-    sortedAsc.forEach((t) => {
-      const amt = parseFloat(t.amount) || 0
-      const isIncoming =
-        t.type === 'income' || (t.type === 'transfer' && t.to_wallet_id === wallet.id)
-      if (isIncoming) {
-        netDeltaTotal += amt
-      } else {
-        netDeltaTotal -= amt
-      }
-    })
-
-    // Starting baseline balance before all recorded transactions
-    const currentBalance = parseFloat(wallet.balance) || 0
-    let running = currentBalance - netDeltaTotal
-
+    let currentBalance = parseFloat(wallet.balance) || 0
     const map = {}
-    sortedAsc.forEach((t) => {
-      const amt = parseFloat(t.amount) || 0
-      const isIncoming =
-        t.type === 'income' || (t.type === 'transfer' && t.to_wallet_id === wallet.id)
-      if (isIncoming) {
-        running += amt
-      } else {
-        running -= amt
-      }
-      map[t.id] = running
+
+    sortedDesc.forEach((tx) => {
+      const amt = parseFloat(tx.amount) || 0
+      // Tentukan apakah transaksi menambah atau mengurangi saldo
+      const isIncome =
+        tx.type === 'Income' ||
+        tx.type === 'Pemasukan' ||
+        tx.type?.toLowerCase() === 'income' ||
+        tx.type?.toLowerCase() === 'pemasukan' ||
+        (tx.type?.toLowerCase() === 'transfer' && tx.to_wallet_id === wallet.id)
+
+      const txEffect = isIncome ? amt : -Math.abs(amt)
+
+      // Saldo akhir untuk baris ini adalah currentBalance (cegah -0)
+      const displayBalance = Math.abs(currentBalance) < 0.0001 ? 0 : currentBalance
+
+      // Mundurkan currentBalance untuk baris di bawahnya (transaksi lebih lama)
+      currentBalance = currentBalance - txEffect
+
+      map[tx.id] = displayBalance
     })
 
     return map
@@ -215,35 +185,38 @@ export default function WalletDetailPage() {
 
     return walletTransactionsAll
       .filter((t) => {
-        if (!t.transaction_date) return false
-        const tDate = new Date(t.transaction_date)
+        const rawDate = t.transaction_date || t.created_at
+        if (!rawDate) return false
+        const tDate = getJakartaDate(rawDate)
         const inMonth =
           tDate.getFullYear() === selectedYear && tDate.getMonth() === selectedMonth
         if (!inMonth) return false
 
         const isIncoming =
-          t.type === 'income' || (t.type === 'transfer' && t.to_wallet_id === wallet.id)
+          t.type?.toLowerCase() === 'income' ||
+          t.type?.toLowerCase() === 'pemasukan' ||
+          (t.type?.toLowerCase() === 'transfer' && t.to_wallet_id === wallet.id)
 
         if (typeFilter === 'income') return isIncoming
         if (typeFilter === 'expense') return !isIncoming
         return true
       })
       .sort((a, b) => {
-        const dateA = new Date(a.transaction_date || a.created_at).getTime()
-        const dateB = new Date(b.transaction_date || b.created_at).getTime()
+        const rawA = a.transaction_date || a.created_at
+        const rawB = b.transaction_date || b.created_at
+        const dateA = rawA ? new Date(rawA).getTime() : 0
+        const dateB = rawB ? new Date(rawB).getTime() : 0
         return dateB - dateA
       })
-  }, [wallet, walletTransactionsAll, selectedYear, selectedMonth, typeFilter])
+      .map((tx) => ({
+        ...tx,
+        runningBalance: runningBalancesMap[tx.id] !== undefined ? runningBalancesMap[tx.id] : 0,
+      }))
+  }, [wallet, walletTransactionsAll, selectedYear, selectedMonth, typeFilter, runningBalancesMap])
 
-  // Group transactions by date string
+  // Group transactions by date string normalized to Asia/Jakarta
   const groupedTransactions = useMemo(() => {
-    const groups = {}
-    filteredTransactions.forEach((t) => {
-      const dateKey = t.transaction_date || 'Unknown'
-      if (!groups[dateKey]) groups[dateKey] = []
-      groups[dateKey].push(t)
-    })
-    return groups
+    return groupTransactionsByDate(filteredTransactions)
   }, [filteredTransactions])
 
   // Quick Action: Handle Update Wallet from modal
@@ -314,7 +287,7 @@ export default function WalletDetailPage() {
         const newTxn = {
           type,
           amount,
-          transaction_date: new Date().toISOString().split('T')[0],
+          transaction_date: getJakartaDateKey(new Date()),
           wallet_id: wallet.id,
           category_id: categoryId,
           note: 'Penyesuaian saldo',
@@ -620,8 +593,8 @@ export default function WalletDetailPage() {
                           (tx.type === 'transfer' && tx.to_wallet_id === wallet.id)
                         const isTransfer = tx.type === 'transfer'
 
-                        // Sisa saldo tercatat setelah transaksi ini
-                        const balanceAfter = runningBalancesMap[tx.id]
+                        // Sisa saldo tercatat setelah transaksi ini (kalkulasi mundur)
+                        const runningBalance = tx.runningBalance !== undefined ? tx.runningBalance : runningBalancesMap[tx.id]
 
                         // Category extraction
                         const isAdjustment = tx.note === 'Penyesuaian saldo'
@@ -677,9 +650,9 @@ export default function WalletDetailPage() {
                                 {isIncome ? '' : '-'}
                                 {formatCurrency(amt)}
                               </p>
-                              {balanceAfter !== undefined && (
+                              {runningBalance !== undefined && (
                                 <p className="text-xs text-slate-400 mt-0.5">
-                                  saldo {formatCurrency(balanceAfter)}
+                                  saldo {formatCurrency(Math.abs(runningBalance) < 0.0001 ? 0 : runningBalance)}
                                 </p>
                               )}
                             </div>
@@ -836,8 +809,8 @@ export default function WalletDetailPage() {
             <form
               onSubmit={handleSaveBalanceAdjustment}
               className={`flex-1 overflow-y-auto px-6 py-4 space-y-4 transition-all duration-200 ${
-                isNumpadOpen ? 'pb-96' : 'pb-6'
-              }`}
+                isNumpadOpen ? 'max-md:pb-[300px]' : 'max-md:pb-6'
+              } md:pb-6`}
             >
               <div className="text-center pt-1">
                 <p className="text-xs font-medium text-slate-500 dark:text-slate-400">
@@ -848,10 +821,10 @@ export default function WalletDetailPage() {
               {/* Centered Large Nominal Input like TransactionForm */}
               <div
                 onClick={() => setIsNumpadOpen(true)}
-                className="flex flex-col items-center justify-center py-2 sm:py-3 cursor-pointer group"
+                className="flex flex-col items-center justify-center w-full py-2 sm:py-3 cursor-pointer group"
               >
-                <div className="flex items-center justify-center gap-1.5">
-                  <span className="text-3xl sm:text-4xl font-bold text-[#1A2C4C] dark:text-blue-400">
+                <div className="flex justify-center items-center w-full gap-2">
+                  <span className="text-3xl sm:text-4xl font-bold shrink-0 text-[#1A2C4C] dark:text-blue-400">
                     Rp
                   </span>
                   <NumericFormat
@@ -873,10 +846,10 @@ export default function WalletDetailPage() {
                       setIsNumpadOpen(true)
                     }}
                     onClick={() => setIsNumpadOpen(true)}
-                    className="w-auto max-w-[280px] sm:max-w-xs text-4xl sm:text-5xl font-bold bg-transparent border-0 outline-none p-0 text-center tracking-tight cursor-pointer text-[#1A2C4C] dark:text-blue-400 caret-transparent select-none focus:outline-none"
+                    className="text-center w-full max-w-[240px] sm:max-w-xs text-4xl sm:text-5xl font-bold bg-transparent border-0 outline-none p-0 tracking-tight cursor-pointer text-[#1A2C4C] dark:text-blue-400 caret-transparent select-none focus:outline-none"
                   />
                   {/* Kursor biru vertikal */}
-                  <span className="w-0.5 h-8 sm:h-10 bg-blue-600 rounded-full animate-pulse ml-0.5" />
+                  <span className="w-0.5 h-8 sm:h-10 bg-blue-600 rounded-full animate-pulse ml-0.5 md:hidden" />
                 </div>
               </div>
 
@@ -904,13 +877,15 @@ export default function WalletDetailPage() {
 
             {/* Mobile Custom Calculator Numpad */}
             {isNumpadOpen && (
-              <CustomNumpad
-                isOpen={true}
-                value={newBalanceInput}
-                onChange={(val) => setNewBalanceInput(val)}
-                onClose={() => setIsNumpadOpen(false)}
-                onSubmit={() => setIsNumpadOpen(false)}
-              />
+              <div className="md:hidden">
+                <CustomNumpad
+                  isOpen={true}
+                  value={newBalanceInput}
+                  onChange={(val) => setNewBalanceInput(val)}
+                  onClose={() => setIsNumpadOpen(false)}
+                  onSubmit={() => setIsNumpadOpen(false)}
+                />
+              </div>
             )}
           </DrawerContent>
         </Drawer>

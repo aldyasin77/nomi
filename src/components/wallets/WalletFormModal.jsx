@@ -658,19 +658,21 @@ export default function WalletFormModal({
           </DrawerClose>
         </DrawerHeader>
 
-        <div className={`flex-1 overflow-y-auto px-6 py-4 transition-all duration-200 ${isNumpadOpen ? 'pb-96' : 'pb-4'}`}>
+        <div className={`flex-1 overflow-y-auto px-6 py-4 transition-all duration-200 ${isNumpadOpen ? 'max-md:pb-[300px]' : 'max-md:pb-4'} md:pb-4`}>
           {step === 1 ? renderStep1() : renderStep2()}
         </div>
 
         {/* Mobile Custom Calculator Numpad (di luar area scroll form) */}
         {isNumpadOpen && (
-          <CustomNumpad
-            isOpen={true}
-            value={form.balance}
-            onChange={(val) => handleChange('balance', val)}
-            onClose={() => setIsNumpadOpen(false)}
-            onSubmit={() => setIsNumpadOpen(false)}
-          />
+          <div className="md:hidden">
+            <CustomNumpad
+              isOpen={true}
+              value={form.balance}
+              onChange={(val) => handleChange('balance', val)}
+              onClose={() => setIsNumpadOpen(false)}
+              onSubmit={() => setIsNumpadOpen(false)}
+            />
+          </div>
         )}
       </DrawerContent>
     </Drawer>

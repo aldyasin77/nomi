@@ -42,8 +42,8 @@ export default function TransactionModal({
   if (isDesktop) {
     return (
       <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-        <DialogContent className="max-w-md rounded-3xl p-6 bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 shadow-2xl">
-          <DialogHeader className="mb-2">
+        <DialogContent className="max-w-md rounded-3xl p-6 bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 shadow-2xl flex flex-col max-h-[88vh] overflow-hidden">
+          <DialogHeader className="mb-2 shrink-0">
             <DialogTitle className="text-xl font-bold text-slate-900 dark:text-white">
               {modalTitle}
             </DialogTitle>

@@ -86,7 +86,7 @@ export default function WalletCard({ wallet, theme, compact = false, onEdit, onD
       {/* Content — uniform flex column distributed evenly */}
       <div className="relative z-10 flex flex-col justify-between h-full">
         {/* Header */}
-        <div className="flex items-start justify-between gap-2">
+        <div className="flex justify-between items-start gap-2">
           <div className="flex items-center gap-3 min-w-0">
             <WalletLogo className="w-10 h-10" logoId={wallet.bank_logo} name={wallet.name} />
             <div className="min-w-0">
@@ -95,9 +95,9 @@ export default function WalletCard({ wallet, theme, compact = false, onEdit, onD
             </div>
           </div>
 
-          {/* Actions — hidden in compact mode */}
+          {/* Actions — hidden in compact mode, visible on both mobile & desktop */}
           {!compact && onEdit && onDelete && (
-            <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200 shrink-0">
+            <div className="flex items-center gap-2 shrink-0">
               <button
                 type="button"
                 onClick={(e) => {
@@ -105,6 +105,7 @@ export default function WalletCard({ wallet, theme, compact = false, onEdit, onD
                   onEdit(wallet)
                 }}
                 className={`p-2 rounded-lg ${isDarkText ? 'bg-black/10 hover:bg-black/20' : 'bg-white/10 hover:bg-white/20'} transition-colors cursor-pointer`}
+                aria-label="Edit wallet"
               >
                 <Pencil size={14} className={isDarkText ? 'text-slate-800' : 'text-white'} />
               </button>
@@ -115,6 +116,7 @@ export default function WalletCard({ wallet, theme, compact = false, onEdit, onD
                   onDelete(wallet)
                 }}
                 className={`p-2 rounded-lg ${isDarkText ? 'bg-black/10 hover:bg-rose-500/50' : 'bg-white/10 hover:bg-rose-500/50'} transition-colors cursor-pointer`}
+                aria-label="Delete wallet"
               >
                 <Trash2 size={14} className={isDarkText ? 'text-slate-800' : 'text-white'} />
               </button>

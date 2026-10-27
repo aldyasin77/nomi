@@ -29,6 +29,7 @@ import {
   INDONESIAN_MONTHS,
   formatDateHeader,
   groupTransactionsByDate,
+  getJakartaDate,
 } from '@/lib/dateUtils'
 
 const MONTH_LABELS = [
@@ -139,8 +140,9 @@ export default function TransactionsPage() {
       }))
 
       transactions.forEach((t) => {
-        if (!t.transaction_date) return
-        const d = new Date(t.transaction_date)
+        const rawDate = t.transaction_date || t.created_at
+        if (!rawDate) return
+        const d = getJakartaDate(rawDate)
         if (d.getFullYear() === selectedYear) {
           const mIdx = d.getMonth()
           const amt = parseFloat(t.amount) || 0
@@ -167,8 +169,9 @@ export default function TransactionsPage() {
     }))
 
     transactions.forEach((t) => {
-      if (!t.transaction_date) return
-      const d = new Date(t.transaction_date)
+      const rawDate = t.transaction_date || t.created_at
+      if (!rawDate) return
+      const d = getJakartaDate(rawDate)
       if (d.getFullYear() === selectedYear && d.getMonth() === monthNum) {
         const dayIdx = d.getDate() - 1
         const amt = parseFloat(t.amount) || 0

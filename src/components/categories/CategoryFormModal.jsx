@@ -9,7 +9,9 @@ import {
   PopoverTrigger,
 } from '@/components/ui/popover'
 import { NumericFormat } from 'react-number-format'
-import { Plus, Search, Check, Smile } from 'lucide-react'
+import { Plus, Check } from 'lucide-react'
+import EmojiPicker from 'emoji-picker-react'
+import { extractCategoryEmojiAndName } from '@/lib/categoryUtils'
 
 const CATEGORY_TYPES = [
   { value: 'expense', label: 'Expense' },
@@ -28,26 +30,12 @@ const COLOR_SWATCHES = [
   { name: 'Pink', hex: '#EC4899', ring: 'ring-pink-400' },
 ]
 
-const POPULAR_EMOJIS = [
-  '🍔', '🍕', '🍜', '☕', '🍱', '🍦', '🥗', '🍰',
-  '🚗', '✈️', '⛽', '🚕', '🚌', '🚲', '🚆', '🛴',
-  '💡', '⚡', '🔧', '🏠', '📱', '🌐', '💧', '🛋️',
-  '👨‍👩‍👧', '🎁', '👶', '🐶', '🐱', '❤️', '🤲', '🎉',
-  '📚', '🎓', '💻', '✏️', '🎒', '🏢', '💼', '📌',
-  '🏥', '💊', '🚨', '🏋️‍♀️', '🩺', '🏃', '🧘', '🩹',
-  '🛍️', '👗', '👟', '🎮', '🎬', '🎟️', '💈', '💄',
-  '💰', '💵', '📈', '🏦', '💎', '🪙', '🧧', '🧾',
-]
-
-import { extractCategoryEmojiAndName } from '@/lib/categoryUtils'
-
 export default function CategoryFormModal({ isOpen, onClose, onSubmit, editingCategory = null }) {
   const isEditing = !!editingCategory
   const [loading, setLoading] = useState(false)
   const [selectedEmoji, setSelectedEmoji] = useState('🍔')
   const [selectedColor, setSelectedColor] = useState(COLOR_SWATCHES[5].hex) // Default blue
   const [emojiPopoverOpen, setEmojiPopoverOpen] = useState(false)
-  const [searchEmoji, setSearchEmoji] = useState('')
 
   const [form, setForm] = useState({
     name: '',
@@ -100,10 +88,6 @@ export default function CategoryFormModal({ isOpen, onClose, onSubmit, editingCa
       setLoading(false)
     }
   }
-
-  const filteredEmojis = searchEmoji
-    ? POPULAR_EMOJIS // Simple search fallback
-    : POPULAR_EMOJIS
 
   return (
     <Modal
@@ -193,47 +177,22 @@ export default function CategoryFormModal({ isOpen, onClose, onSubmit, editingCa
                 </button>
               </PopoverTrigger>
               <PopoverContent
-                className="w-72 p-3 bg-white shadow-2xl rounded-2xl border border-slate-200 z-70"
+                className="w-auto p-0 border-0 bg-transparent shadow-2xl rounded-2xl z-70 overflow-hidden"
                 align="start"
                 sideOffset={8}
               >
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between border-b border-slate-100 pb-2">
-                    <span className="text-xs font-bold text-slate-800">Select Emoji</span>
-                    <span className="text-[10px] text-slate-400">Pilih ikon</span>
-                  </div>
-
-                  {/* Search */}
-                  <div className="relative">
-                    <Search size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400" />
-                    <input
-                      type="text"
-                      value={searchEmoji}
-                      onChange={(e) => setSearchEmoji(e.target.value)}
-                      placeholder="Cari emoji..."
-                      className="w-full h-8 pl-8 pr-3 text-base sm:text-xs rounded-lg border border-slate-200 bg-slate-50 focus:bg-white focus:outline-hidden focus:border-indigo-500"
-                    />
-                  </div>
-
-                  {/* Emoji Grid */}
-                  <div className="grid grid-cols-6 gap-2 max-h-48 overflow-y-auto py-1">
-                    {filteredEmojis.map((emoji, index) => (
-                      <button
-                        key={index}
-                        type="button"
-                        onClick={() => {
-                          setSelectedEmoji(emoji)
-                          setEmojiPopoverOpen(false)
-                        }}
-                        className={`
-                          w-9 h-9 rounded-xl flex items-center justify-center text-lg hover:bg-slate-100 transition-all cursor-pointer
-                          ${selectedEmoji === emoji ? 'bg-indigo-100 ring-2 ring-indigo-500 scale-105' : ''}
-                        `}
-                      >
-                        {emoji}
-                      </button>
-                    ))}
-                  </div>
+                <div className="flex justify-center w-full max-w-[340px]">
+                  <EmojiPicker
+                    onEmojiClick={(emojiObject) => {
+                      setSelectedEmoji(emojiObject.emoji)
+                      setEmojiPopoverOpen(false)
+                    }}
+                    autoFocusSearch={false}
+                    theme={typeof document !== 'undefined' && document.documentElement.classList.contains('dark') ? 'dark' : 'light'}
+                    width="100%"
+                    height={400}
+                    searchPlaceHolder="Cari emoji..."
+                  />
                 </div>
               </PopoverContent>
             </Popover>

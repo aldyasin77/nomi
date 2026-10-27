@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react'
 import { NumericFormat } from 'react-number-format'
+import toast from 'react-hot-toast'
 import { useMediaQuery } from '@/hooks/useMediaQuery'
 import {
   Dialog,
@@ -63,7 +64,7 @@ export default function RecurringModal({
 }) {
   const isDesktop = useMediaQuery('(min-width: 768px)')
   const [loading, setLoading] = useState(false)
-  const [isNumpadOpen, setIsNumpadOpen] = useState(true)
+  const [isNumpadOpen, setIsNumpadOpen] = useState(!isDesktop)
   const [dayPopoverOpen, setDayPopoverOpen] = useState(false)
 
   // Drawer for selecting wallets
@@ -124,8 +125,18 @@ export default function RecurringModal({
 
   useEffect(() => {
     if (initialData) {
+      let rawType = initialData.type || 'expense'
+      if (typeof rawType === 'string') {
+        const lower = rawType.toLowerCase().trim()
+        if (lower === 'pengeluaran') rawType = 'expense'
+        else if (lower === 'pemasukan') rawType = 'income'
+        else if (lower === 'transfer') rawType = 'transfer'
+        else if (['expense', 'income', 'transfer'].includes(lower)) rawType = lower
+        else rawType = 'expense'
+      }
+
       setForm({
-        type: initialData.type || 'expense',
+        type: rawType,
         note: initialData.note || '',
         amount: initialData.amount || '',
         execution_day: initialData.execution_day || 1,
@@ -148,7 +159,7 @@ export default function RecurringModal({
       })
     }
     if (isOpen) {
-      setIsNumpadOpen(true)
+      setIsNumpadOpen(!isDesktop)
     }
   }, [initialData, wallets, isOpen, categories])
 
@@ -202,18 +213,60 @@ export default function RecurringModal({
       if (!isDesktop) setIsNumpadOpen(true)
       return
     }
+
+    let mappedType = form.type // 'type' dari state UI (misal: 'Pengeluaran')
+
+    if (form.type.toLowerCase() === 'pengeluaran' || form.type.toLowerCase() === 'expense') {
+      mappedType = 'Expense'
+    } else if (form.type.toLowerCase() === 'pemasukan' || form.type.toLowerCase() === 'income') {
+      mappedType = 'Income'
+    } else if (form.type.toLowerCase() === 'transfer') {
+      mappedType = 'Transfer'
+    }
+
+    // Validasi input dompet & kategori
+    if (!form.wallet_id || form.wallet_id.trim() === '') {
+      toast.error('Silakan pilih dompet terlebih dahulu')
+      return
+    }
+
+    if (mappedType !== 'Transfer' && (!form.category_id || form.category_id.trim() === '')) {
+      toast.error('Silakan pilih kategori terlebih dahulu')
+      return
+    }
+
+    if (mappedType === 'Transfer' && (!form.to_wallet_id || form.to_wallet_id.trim() === '')) {
+      toast.error('Silakan pilih dompet tujuan transfer')
+      return
+    }
+
+    // Sanitasi UUID: ubah string kosong "" menjadi null
+    const sanitizeUuid = (val) => {
+      if (!val || typeof val !== 'string' || val.trim() === '') return null
+      return val.trim()
+    }
+
+    const payload = {
+      ...form,
+      type: mappedType,
+      wallet_id: sanitizeUuid(form.wallet_id),
+      category_id: mappedType === 'Transfer' ? null : sanitizeUuid(form.category_id),
+      to_wallet_id: mappedType === 'Transfer' ? sanitizeUuid(form.to_wallet_id) : null,
+    }
+
     setLoading(true)
     try {
-      await onSubmit(form)
+      await onSubmit(payload)
       onClose()
     } catch (err) {
       console.error('Failed to submit recurring transaction:', err)
+      toast.error(err.message || 'Gagal menyimpan transaksi rutin')
     } finally {
       setLoading(false)
     }
   }
 
-  const formContent = (
+  const formBody = (
     <div className="space-y-4">
       {/* 1. Type Switcher (Pill Style) */}
       <div className="w-full bg-slate-100 dark:bg-slate-800 p-1 rounded-full flex gap-1">
@@ -236,15 +289,15 @@ export default function RecurringModal({
         })}
       </div>
 
-      {/* 2. Nominal Input (Tengah - Typography Style like TransactionForm) */}
+      {/* 2. Nominal Input (Tengah) */}
       <div
         onClick={() => {
           if (!isDesktop) setIsNumpadOpen(true)
         }}
-        className="flex flex-col items-center justify-center py-2 sm:py-3 cursor-pointer group"
+        className="flex flex-col items-center justify-center w-full py-2 sm:py-3 cursor-pointer group"
       >
-        <div className="flex items-center justify-center gap-1.5">
-          <span className={`text-3xl sm:text-4xl font-bold ${amountColorClass}`}>
+        <div className="flex justify-center items-center w-full gap-2">
+          <span className={`text-3xl sm:text-4xl font-bold shrink-0 ${amountColorClass}`}>
             Rp
           </span>
           <NumericFormat
@@ -267,12 +320,12 @@ export default function RecurringModal({
             onClick={() => {
               if (!isDesktop) setIsNumpadOpen(true)
             }}
-            className={`w-auto max-w-[280px] sm:max-w-xs text-4xl sm:text-5xl font-bold bg-transparent border-0 outline-none p-0 text-center tracking-tight cursor-pointer ${amountColorClass} ${
+            className={`text-center w-full max-w-[240px] sm:max-w-xs text-4xl sm:text-5xl font-bold bg-transparent border-0 outline-none p-0 tracking-tight cursor-pointer ${amountColorClass} ${
               !isDesktop ? 'caret-transparent select-none focus:outline-none' : ''
             }`}
           />
           {/* Kursor biru vertikal */}
-          <span className="w-0.5 h-8 sm:h-10 bg-blue-600 rounded-full animate-pulse ml-0.5" />
+          <span className="w-0.5 h-8 sm:h-10 bg-blue-600 rounded-full animate-pulse ml-0.5 md:hidden" />
         </div>
 
         {/* Subtitle di bawah nominal */}
@@ -513,26 +566,28 @@ export default function RecurringModal({
         </div>
       </div>
 
-      {/* 5. Tombol Action (Batal & Simpan) */}
-      <div className="flex items-center gap-2.5 pt-2">
-        <Button
-          type="button"
-          variant="outline"
-          onClick={onClose}
-          className="rounded-full px-5 h-12 text-sm font-semibold border-slate-200 dark:border-slate-700 hover:bg-slate-100 text-slate-700 dark:text-slate-200"
-        >
-          Batal
-        </Button>
-        <Button
-          type="button"
-          onClick={handleSubmit}
-          loading={loading}
-          disabled={!form.amount || parseFloat(form.amount) <= 0}
-          className="flex-1 rounded-full h-12 text-sm font-bold bg-[#1A2C4C] hover:bg-[#13223b] text-white shadow-md cursor-pointer disabled:opacity-40"
-        >
-          {initialData ? 'Simpan Perubahan' : 'Tambah Langganan'}
-        </Button>
-      </div>
+    </div>
+  )
+
+  const actionButtons = (
+    <div className="flex justify-end gap-3 pt-4 border-t border-slate-100 dark:border-slate-800 mt-auto bg-white dark:bg-slate-900 shrink-0">
+      <Button
+        type="button"
+        variant="outline"
+        onClick={onClose}
+        className="rounded-full px-5 h-11 text-sm font-semibold border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200"
+      >
+        Batal
+      </Button>
+      <Button
+        type="button"
+        onClick={handleSubmit}
+        loading={loading}
+        disabled={!form.amount || parseFloat(form.amount) <= 0}
+        className="rounded-full px-6 h-11 text-sm font-bold bg-[#1A2C4C] hover:bg-[#13223b] text-white shadow-md cursor-pointer disabled:opacity-40"
+      >
+        {initialData ? 'Simpan Perubahan' : 'Tambah Langganan'}
+      </Button>
     </div>
   )
 
@@ -540,8 +595,8 @@ export default function RecurringModal({
     return (
       <>
         <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-          <DialogContent className="max-w-md bg-white dark:bg-slate-900 rounded-3xl p-6 shadow-2xl border border-slate-200 dark:border-slate-800">
-            <DialogHeader className="pb-3 border-b border-slate-100 dark:border-slate-800">
+          <DialogContent className="max-w-md bg-white dark:bg-slate-900 rounded-3xl p-6 shadow-2xl border border-slate-200 dark:border-slate-800 flex flex-col max-h-[88vh] overflow-hidden">
+            <DialogHeader className="pb-3 border-b border-slate-100 dark:border-slate-800 shrink-0">
               <DialogTitle className="text-xl font-bold text-slate-900 dark:text-white tracking-tight">
                 {initialData ? 'Edit Transaksi Rutin' : 'Tambah Transaksi Rutin'}
               </DialogTitle>
@@ -549,7 +604,10 @@ export default function RecurringModal({
                 Catat tagihan dan langganan bulanan otomatis
               </DialogDescription>
             </DialogHeader>
-            <div className="pt-2">{formContent}</div>
+            <div className="flex-1 overflow-y-auto pt-2 space-y-4 pr-1">
+              {formBody}
+            </div>
+            {actionButtons}
           </DialogContent>
         </Dialog>
 
@@ -723,22 +781,25 @@ export default function RecurringModal({
           </DrawerHeader>
 
           <div
-            className={`flex-1 overflow-y-auto overscroll-contain px-4 pt-3 transition-all duration-200 ${
-              isNumpadOpen ? 'pb-96' : 'pb-6'
-            }`}
+            className={`flex-1 overflow-y-auto overscroll-contain px-4 pt-3 space-y-4 transition-all duration-200 ${
+              isNumpadOpen ? 'max-md:pb-[300px]' : 'max-md:pb-4'
+            } md:pb-4`}
           >
-            {formContent}
+            {formBody}
+            {actionButtons}
           </div>
 
           {/* Mobile Custom Calculator Numpad */}
           {isNumpadOpen && (
-            <CustomNumpad
-              isOpen={true}
-              value={form.amount}
-              onChange={(val) => handleChange('amount', val)}
-              onClose={() => setIsNumpadOpen(false)}
-              onSubmit={() => setIsNumpadOpen(false)}
-            />
+            <div className="md:hidden">
+              <CustomNumpad
+                isOpen={true}
+                value={form.amount}
+                onChange={(val) => handleChange('amount', val)}
+                onClose={() => setIsNumpadOpen(false)}
+                onSubmit={() => setIsNumpadOpen(false)}
+              />
+            </div>
           )}
         </DrawerContent>
       </Drawer>

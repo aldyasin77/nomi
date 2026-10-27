@@ -17,6 +17,7 @@ import {
 import GlassCard from '../ui/GlassCard'
 import EmptyState from '../ui/EmptyState'
 import { extractCategoryEmojiAndName } from '@/lib/categoryUtils'
+import { formatDateHeader } from '@/lib/dateUtils'
 
 const formatCurrency = (amount) => {
   return new Intl.NumberFormat('id-ID', {
@@ -28,19 +29,7 @@ const formatCurrency = (amount) => {
 }
 
 const formatDate = (dateStr) => {
-  if (!dateStr) return ''
-  const date = new Date(dateStr)
-  const now = new Date()
-  const isToday = date.toDateString() === now.toDateString()
-  
-  const yesterday = new Date(now)
-  yesterday.setDate(yesterday.getDate() - 1)
-  const isYesterday = date.toDateString() === yesterday.toDateString()
-
-  if (isToday) return 'Today'
-  if (isYesterday) return 'Yesterday'
-  
-  return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+  return formatDateHeader(dateStr)
 }
 
 function getCategoryIcon(name, type) {
