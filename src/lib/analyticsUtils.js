@@ -53,7 +53,7 @@ export function calculateTotalInterest(walletId, allTransactions = []) {
     return 0
   }
 
-  return allTransactions
+  const netInterest = allTransactions
     .filter((tx) => {
       if (tx.wallet_id !== walletId && tx.to_wallet_id !== walletId) return false
 
@@ -61,11 +61,43 @@ export function calculateTotalInterest(walletId, allTransactions = []) {
         tx.category?.name ||
         tx.category_name ||
         (typeof tx.category === 'string' ? tx.category : '') ||
-        tx.note ||
         ''
       ).toLowerCase()
+      const note = (tx.note || '').toLowerCase()
+      const combinedText = `${catName} ${note}`.trim()
 
-      return catName.includes('bunga') || catName.includes('interest')
+      const type = (tx.type || '').toLowerCase()
+
+      // Pemasukan bunga
+      if (type === 'income' || type === 'pemasukan') {
+        return combinedText.includes('bunga') || combinedText.includes('interest')
+      }
+
+      // Pengeluaran pajak bunga
+      if (type === 'expense' || type === 'pengeluaran') {
+        const hasBungaOrInterest = combinedText.includes('bunga') || combinedText.includes('interest')
+        const hasPajak = combinedText.includes('pajak') || combinedText.includes('tax')
+        const hasSimpananOrTabungan = combinedText.includes('simpanan') || combinedText.includes('tabungan')
+
+        return (
+          hasBungaOrInterest ||
+          (hasPajak && hasSimpananOrTabungan) ||
+          combinedText.includes('pajak bunga') ||
+          combinedText.includes('tax interest')
+        )
+      }
+
+      return false
     })
-    .reduce((sum, tx) => sum + (parseFloat(tx.amount) || 0), 0)
+    .reduce((sum, tx) => {
+      const type = (tx.type || '').toLowerCase()
+      const amt = parseFloat(tx.amount) || 0
+      // Income menambah akumulasi bunga, Expense (pajak bunga) mengurangi akumulasi bunga
+      if (type === 'expense' || type === 'pengeluaran') {
+        return sum - amt
+      }
+      return sum + amt
+    }, 0)
+
+  return Math.max(0, netInterest)
 }

@@ -36,6 +36,8 @@ export function extractCategoryEmojiAndName(categoryOrName, type = 'expense') {
     fallbackEmoji = '🛍️'
   } else if (lower.includes('salary') || lower.includes('gaji') || lower.includes('income')) {
     fallbackEmoji = '💵'
+  } else if (lower.includes('pajak') || lower.includes('tax')) {
+    fallbackEmoji = '🧾'
   } else if (lower.includes('interest') || lower.includes('bunga') || lower.includes('invest')) {
     fallbackEmoji = '📈'
   } else if (lower.includes('health') || lower.includes('obat') || lower.includes('sehat') || lower.includes('gym')) {

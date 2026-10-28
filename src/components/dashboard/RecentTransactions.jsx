@@ -53,6 +53,9 @@ function getCategoryIcon(name, type) {
   if (lower.includes('salary') || lower.includes('gaji') || lower.includes('income')) {
     return { icon: Briefcase, bg: 'bg-emerald-50 text-emerald-600', color: 'text-emerald-600' }
   }
+  if (lower.includes('pajak') || lower.includes('tax')) {
+    return { icon: Receipt, bg: 'bg-rose-50 text-rose-600', color: 'text-rose-600' }
+  }
   if (lower.includes('interest') || lower.includes('bunga') || lower.includes('invest')) {
     return { icon: TrendingUp, bg: 'bg-cyan-50 text-cyan-600', color: 'text-cyan-600' }
   }
