@@ -78,7 +78,7 @@ export default function SettingsPage() {
           <div className="flex items-center gap-2 shrink-0 flex-wrap">
             {totalLimit > 0 && (
               <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 border border-rose-100 dark:border-rose-900/40">
-                Total Limit: {formatCurrency(totalLimit)}/bln
+                {formatCurrency(totalLimit)}/bln
               </span>
             )}
             <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">
@@ -98,9 +98,8 @@ export default function SettingsPage() {
                   className="flex items-center justify-between py-3 px-3 -mx-2 rounded-2xl hover:bg-slate-50 dark:hover:bg-slate-800/60 transition-colors group"
                 >
                   <div className="flex items-center gap-3">
-                    <div className={`w-10 h-10 rounded-2xl flex items-center justify-center text-lg shrink-0 shadow-2xs border border-white/60 dark:border-slate-800 ${
-                      category.type === 'income' ? 'bg-emerald-50 dark:bg-emerald-950/40' : 'bg-rose-50 dark:bg-rose-950/40'
-                    }`}>
+                    <div className={`w-10 h-10 rounded-2xl flex items-center justify-center text-lg shrink-0 shadow-2xs border border-white/60 dark:border-slate-800 ${category.type === 'income' ? 'bg-emerald-50 dark:bg-emerald-950/40' : 'bg-rose-50 dark:bg-rose-950/40'
+                      }`}>
                       <span>{emoji}</span>
                     </div>
                     <div>
