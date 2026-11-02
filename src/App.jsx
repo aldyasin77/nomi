@@ -1,7 +1,8 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { BrowserRouter, Routes, Route, Outlet } from 'react-router-dom'
 import { Toaster } from 'react-hot-toast'
-import { AuthProvider } from './context/AuthContext'
+import { AuthProvider, useAuth } from './context/AuthContext'
+import { processDueRecurringTransactions } from './lib/recurringAutomation'
 import ProtectedRoute from './components/layout/ProtectedRoute'
 import Sidebar from './components/layout/Sidebar'
 import BottomNav from './components/layout/BottomNav'
@@ -16,6 +17,26 @@ import RecurringPage from './pages/RecurringPage'
 import SettingsPage from './pages/SettingsPage'
 
 function AppLayout() {
+  const { user } = useAuth()
+
+  // Trigger lazy evaluation pencatatan transaksi rutin yang jatuh tempo
+  useEffect(() => {
+    if (user) {
+      processDueRecurringTransactions(user)
+    }
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible' && user) {
+        processDueRecurringTransactions(user)
+      }
+    }
+
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
+    }
+  }, [user])
+
   return (
     <div className="min-h-screen bg-[#F8FAFC]">
       <Sidebar />

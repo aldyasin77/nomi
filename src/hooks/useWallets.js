@@ -56,6 +56,15 @@ export function useWallets() {
     fetchWallets()
   }, [fetchWallets])
 
+  // Sinkronisasi otomatis saat proses background lazy evaluation berhasil mencatat transaksi
+  useEffect(() => {
+    const handleSync = () => {
+      fetchWallets()
+    }
+    window.addEventListener('nomi_data_changed', handleSync)
+    return () => window.removeEventListener('nomi_data_changed', handleSync)
+  }, [fetchWallets])
+
   const addWallet = async (wallet) => {
     if (isDemo) {
       const newWallet = {

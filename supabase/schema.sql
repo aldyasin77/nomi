@@ -245,6 +245,7 @@ CREATE TABLE IF NOT EXISTS public.recurring_transactions (
     category_id UUID REFERENCES public.categories(id) ON DELETE SET NULL,
     note TEXT,
     is_active BOOLEAN NOT NULL DEFAULT TRUE,
+    last_processed_month TEXT DEFAULT NULL,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
@@ -270,6 +271,7 @@ CREATE POLICY "Users can delete own recurring transactions"
 
 -- Migration for existing databases:
 ALTER TABLE public.wallets ADD COLUMN IF NOT EXISTS bank_logo TEXT DEFAULT NULL;
+ALTER TABLE public.recurring_transactions ADD COLUMN IF NOT EXISTS last_processed_month TEXT DEFAULT NULL;
 
 -- ============================================================
 -- 8. Savings Interest & Tax (20%) Automation with pg_cron

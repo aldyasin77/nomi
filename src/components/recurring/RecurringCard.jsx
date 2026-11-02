@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useMemo } from 'react'
 import {
   CalendarClock,
   TrendingDown,
@@ -9,6 +9,7 @@ import {
   Wallet,
   Bell,
   BellOff,
+  CheckCircle2,
 } from 'lucide-react'
 import { Switch } from '@/components/ui/switch'
 
@@ -30,6 +31,12 @@ export default function RecurringCard({
 }) {
   const wallet = wallets.find((w) => w.id === item.wallet_id)
   const category = categories.find((c) => c.id === item.category_id)
+
+  const currentMonthStr = useMemo(() => {
+    const now = new Date()
+    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
+  }, [])
+  const isProcessedThisMonth = item.last_processed_month === currentMonthStr
 
   const normalizedType = (() => {
     const raw = String(item.type || 'expense').toLowerCase().trim()
@@ -110,7 +117,12 @@ export default function RecurringCard({
                 <span>Cair setiap tanggal {item.execution_day}</span>
               </span>
 
-              {item.is_active ? (
+              {isProcessedThisMonth ? (
+                <span className="inline-flex items-center gap-1 font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200/80 px-1.5 py-0.5 rounded-md text-[11px]">
+                  <CheckCircle2 size={11} className="text-emerald-600" />
+                  <span>Tercatat bln ini</span>
+                </span>
+              ) : item.is_active ? (
                 <span className="inline-flex items-center gap-1 font-medium text-indigo-700 bg-indigo-50/80 border border-indigo-100/60 px-1.5 py-0.5 rounded-md text-[11px]">
                   <Bell size={11} className="text-indigo-600" />
                   <span>Notifikasi Aktif</span>

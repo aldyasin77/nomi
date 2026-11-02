@@ -56,22 +56,24 @@ export function useNotifications() {
     const daysInCurrentMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0).getDate()
 
     const activeRecurring = recurringList.filter((item) => item.is_active)
+    const currentMonthStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`
 
     return activeRecurring.map((item) => {
       const execDay = item.execution_day || 1
+      const isProcessedThisMonth = item.last_processed_month === currentMonthStr
       let urgency = 'upcoming' // 'today' | 'soon' | 'upcoming'
       let daysRemaining = 0
       let statusLabel = ''
       let statusBadge = ''
       let badgeColor = ''
 
-      if (execDay === currentDay) {
+      if (execDay === currentDay && !isProcessedThisMonth) {
         urgency = 'today'
         daysRemaining = 0
         statusLabel = 'Jatuh tempo hari ini!'
         statusBadge = 'Hari Ini'
         badgeColor = 'bg-rose-50 text-rose-600 border-rose-200'
-      } else if (execDay > currentDay) {
+      } else if (execDay > currentDay && !isProcessedThisMonth) {
         daysRemaining = execDay - currentDay
         if (daysRemaining <= 3) {
           urgency = 'soon'
@@ -85,7 +87,7 @@ export function useNotifications() {
           badgeColor = 'bg-blue-50 text-blue-700 border-blue-200'
         }
       } else {
-        // execDay < currentDay: Next month
+        // execDay < currentDay atau sudah dicatat bulan ini: Jadwal bulan berikutnya
         daysRemaining = (daysInCurrentMonth - currentDay) + execDay
         if (daysRemaining <= 3) {
           urgency = 'soon'
@@ -94,7 +96,9 @@ export function useNotifications() {
           badgeColor = 'bg-amber-50 text-amber-700 border-amber-200'
         } else {
           urgency = 'upcoming'
-          statusLabel = `Jadwal cair berikutnya tanggal ${execDay}`
+          statusLabel = isProcessedThisMonth
+            ? `Sudah dicatat bulan ini (Berikutnya tgl ${execDay})`
+            : `Jadwal cair berikutnya tanggal ${execDay}`
           statusBadge = `Tgl ${execDay}`
           badgeColor = 'bg-slate-100 text-slate-700 border-slate-200'
         }

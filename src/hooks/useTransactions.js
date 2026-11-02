@@ -115,6 +115,15 @@ export function useTransactions(filters = {}) {
     fetchTransactions()
   }, [fetchTransactions])
 
+  // Sinkronisasi otomatis saat proses background lazy evaluation berhasil mencatat transaksi
+  useEffect(() => {
+    const handleSync = () => {
+      fetchTransactions()
+    }
+    window.addEventListener('nomi_data_changed', handleSync)
+    return () => window.removeEventListener('nomi_data_changed', handleSync)
+  }, [fetchTransactions])
+
   const addTransaction = async (transaction) => {
     if (isDemo) {
       const allTxns = getStoredTransactions()

@@ -12,6 +12,7 @@ const INITIAL_DEMO_RECURRING = [
     type: 'expense',
     execution_day: 5,
     is_active: true,
+    last_processed_month: null,
     wallet_id: '',
     category_id: '',
     created_at: new Date().toISOString(),
@@ -23,6 +24,7 @@ const INITIAL_DEMO_RECURRING = [
     type: 'expense',
     execution_day: 12,
     is_active: true,
+    last_processed_month: null,
     wallet_id: '',
     category_id: '',
     created_at: new Date().toISOString(),
@@ -34,6 +36,7 @@ const INITIAL_DEMO_RECURRING = [
     type: 'expense',
     execution_day: 20,
     is_active: true,
+    last_processed_month: null,
     wallet_id: '',
     category_id: '',
     created_at: new Date().toISOString(),
@@ -45,6 +48,7 @@ const INITIAL_DEMO_RECURRING = [
     type: 'income',
     execution_day: 25,
     is_active: true,
+    last_processed_month: null,
     wallet_id: '',
     category_id: '',
     created_at: new Date().toISOString(),
@@ -124,6 +128,15 @@ export function useRecurringTransactions() {
     fetchRecurring()
   }, [fetchRecurring])
 
+  // Sinkronisasi otomatis saat proses background lazy evaluation berhasil mencatat transaksi
+  useEffect(() => {
+    const handleSync = () => {
+      fetchRecurring()
+    }
+    window.addEventListener('nomi_data_changed', handleSync)
+    return () => window.removeEventListener('nomi_data_changed', handleSync)
+  }, [fetchRecurring])
+
   const addRecurring = async (item) => {
     let mappedType = item.type
     if (typeof item.type === 'string') {
@@ -151,6 +164,7 @@ export function useRecurringTransactions() {
       amount: parseFloat(item.amount) || 0,
       execution_day: parseInt(item.execution_day, 10) || 1,
       is_active: item.is_active ?? true,
+      last_processed_month: item.last_processed_month || null,
       note: item.note || '',
       type: mappedType,
       wallet_id: sanitizeUuid(item.wallet_id),
@@ -243,6 +257,7 @@ export function useRecurringTransactions() {
       ...(updates.wallet_id !== undefined ? { wallet_id: sanitizeUuid(updates.wallet_id) } : {}),
       ...(updates.category_id !== undefined ? { category_id: mappedType === 'Transfer' ? null : sanitizeUuid(updates.category_id) } : {}),
       ...(updates.to_wallet_id !== undefined ? { to_wallet_id: mappedType === 'Transfer' ? sanitizeUuid(updates.to_wallet_id) : null } : {}),
+      ...(updates.last_processed_month !== undefined ? { last_processed_month: updates.last_processed_month } : {}),
       updated_at: new Date().toISOString(),
     }
 
