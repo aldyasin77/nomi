@@ -22,6 +22,7 @@ import WalletCard from '../components/wallets/WalletCard'
 import WalletFormModal from '../components/wallets/WalletFormModal'
 import Button from '../components/ui/Button'
 import EmptyState from '../components/ui/EmptyState'
+import PageHeader from '@/components/common/PageHeader'
 import toast from 'react-hot-toast'
 
 const formatCurrency = (amount) => {
@@ -148,18 +149,17 @@ export default function WalletsPage() {
 
   return (
     <div className="space-y-8">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Wallets</h1>
-          <p className="text-sm text-slate-500 mt-1">
-            Total Balance: <span className="font-semibold text-slate-900">{formatCurrency(totalBalance)}</span>
-          </p>
-        </div>
-        <Button icon={Plus} onClick={() => setShowModal(true)}>
-          Add Wallet
-        </Button>
-      </div>
+      {/* Reusable Sticky Page Header */}
+      <PageHeader
+        title="Wallets"
+        subtitle={`Total Balance: ${formatCurrency(totalBalance)}`}
+        showBack={false}
+        rightAction={
+          <Button icon={Plus} onClick={() => setShowModal(true)} className="text-xs">
+            Add Wallet
+          </Button>
+        }
+      />
 
       {/* Wallet Grid with Drag & Drop */}
       {wallets.length === 0 ? (

@@ -82,7 +82,12 @@ export function groupTransactionsByDate(transactions = []) {
     const rawB = b.transaction_date || b.date || b.created_at
     const dateA = rawA ? new Date(rawA).getTime() : 0
     const dateB = rawB ? new Date(rawB).getTime() : 0
-    return dateB - dateA
+    if (dateB !== dateA) return dateB - dateA
+
+    // Tie-breaker jika tanggal sama: created_at descending agar transaksi terbaru mutlak di atas
+    const createdA = a.created_at ? new Date(a.created_at).getTime() : 0
+    const createdB = b.created_at ? new Date(b.created_at).getTime() : 0
+    return createdB - createdA
   })
 
   sorted.forEach((t) => {

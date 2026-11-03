@@ -79,11 +79,12 @@ export default function TransactionForm({
   initialTab = 'expense',
   initialType,
   initialWalletId,
+  initialData = null,
 }) {
   const isMobile = useIsMobile()
   const navigate = useNavigate()
   const [loading, setLoading] = useState(false)
-  const [isNumpadOpen, setIsNumpadOpen] = useState(true) // Default open in mobile for seamless flow
+  const [isNumpadOpen, setIsNumpadOpen] = useState(!initialData) // Default open in mobile for new tx, collapsed if editing
   const [datePopoverOpen, setDatePopoverOpen] = useState(false)
 
   // Drawer for selecting wallets
@@ -94,15 +95,15 @@ export default function TransactionForm({
   const [categoryDrawerOpen, setCategoryDrawerOpen] = useState(false)
   const [categorySearch, setCategorySearch] = useState('')
 
-  const [form, setForm] = useState({
-    type: initialTab || initialType || 'expense',
-    amount: '',
-    transaction_date: getJakartaDateKey(new Date()),
-    wallet_id: initialWalletId || (wallets[0]?.id || ''),
-    to_wallet_id: '',
-    category_id: '',
-    note: '',
-  })
+  const [form, setForm] = useState(() => ({
+    type: initialData?.type || initialTab || initialType || 'expense',
+    amount: initialData?.amount !== undefined ? String(initialData.amount) : '',
+    transaction_date: initialData?.transaction_date || initialData?.date || getJakartaDateKey(new Date()),
+    wallet_id: initialData?.wallet_id || initialWalletId || (wallets[0]?.id || ''),
+    to_wallet_id: initialData?.to_wallet_id || '',
+    category_id: initialData?.category_id || '',
+    note: initialData?.note || '',
+  }))
 
   // Filter categories by type
   const filteredCategories = useMemo(() => {
@@ -123,19 +124,32 @@ export default function TransactionForm({
     })
   }, [filteredCategories, categorySearch])
 
-  // Sync initial tab and default category
+  // Sync initial tab and default category, or handle initialData changes
   useEffect(() => {
-    const activeType = initialTab || initialType || 'expense'
-    const defaultWallet = initialWalletId || form.wallet_id || (wallets[0]?.id || '')
-    const defaultCategories = categories.filter((c) => c.type === activeType)
+    if (initialData) {
+      setForm({
+        type: initialData.type || 'expense',
+        amount: initialData.amount !== undefined ? String(initialData.amount) : '',
+        transaction_date: initialData.transaction_date || initialData.date || getJakartaDateKey(new Date()),
+        wallet_id: initialData.wallet_id || (wallets[0]?.id || ''),
+        to_wallet_id: initialData.to_wallet_id || '',
+        category_id: initialData.category_id || '',
+        note: initialData.note || '',
+      })
+      setIsNumpadOpen(false)
+    } else {
+      const activeType = initialTab || initialType || 'expense'
+      const defaultWallet = initialWalletId || (wallets[0]?.id || '')
+      const defaultCategories = categories.filter((c) => c.type === activeType)
 
-    setForm((prev) => ({
-      ...prev,
-      type: activeType,
-      wallet_id: defaultWallet,
-      category_id: prev.category_id || defaultCategories[0]?.id || '',
-    }))
-  }, [initialTab, initialType, initialWalletId, wallets, categories])
+      setForm((prev) => ({
+        ...prev,
+        type: activeType,
+        wallet_id: prev.wallet_id || defaultWallet,
+        category_id: prev.category_id || defaultCategories[0]?.id || '',
+      }))
+    }
+  }, [initialData, initialTab, initialType, initialWalletId, wallets, categories])
 
   // If type changes, set first available category
   const handleTypeChange = (type) => {
@@ -239,10 +253,11 @@ export default function TransactionForm({
   }, [form.type])
 
   const submitButtonLabel = useMemo(() => {
+    if (initialData) return 'Simpan perubahan'
     if (form.type === 'income') return 'Simpan pemasukan'
     if (form.type === 'transfer') return 'Simpan transfer'
     return 'Simpan pengeluaran'
-  }, [form.type])
+  }, [initialData, form.type])
 
   return (
     <div className="relative w-full h-full flex flex-col overflow-hidden select-none">

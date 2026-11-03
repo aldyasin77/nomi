@@ -6,6 +6,7 @@ import Profile from '../components/profile/Profile'
 import GlassCard from '../components/ui/GlassCard'
 import Button from '../components/ui/Button'
 import EmptyState from '../components/ui/EmptyState'
+import PageHeader from '@/components/common/PageHeader'
 import toast from 'react-hot-toast'
 import { extractCategoryEmojiAndName } from '@/lib/categoryUtils'
 
@@ -147,24 +148,22 @@ export default function SettingsPage() {
       <div className="md:hidden">
         {mobileCategoryView ? (
           <div className="space-y-4 animate-fade-in">
-            <div className="flex items-center justify-between pt-1">
-              <button
-                type="button"
-                onClick={() => setMobileCategoryView(false)}
-                className="flex items-center gap-1.5 text-xs font-bold text-slate-600 hover:text-slate-900 cursor-pointer p-1"
-              >
-                <ArrowLeft size={16} />
-                <span>Kembali ke Profil</span>
-              </button>
-              <Button
-                size="sm"
-                icon={Plus}
-                onClick={() => setShowModal(true)}
-                className="bg-[#1A2C4C] text-white"
-              >
-                Kategori
-              </Button>
-            </div>
+            <PageHeader
+              title="Konfigurasi Kategori"
+              subtitle="Atur limit dan kategori keuanganmu"
+              showBack={true}
+              onBack={() => setMobileCategoryView(false)}
+              rightAction={
+                <Button
+                  size="sm"
+                  icon={Plus}
+                  onClick={() => setShowModal(true)}
+                  className="bg-[#1A2C4C] text-white text-xs"
+                >
+                  Kategori
+                </Button>
+              }
+            />
 
             <div className="space-y-4">
               {renderCategoryList(expenseCategories, 'Kategori Pengeluaran')}
@@ -180,15 +179,16 @@ export default function SettingsPage() {
       {/* DESKTOP VIEW (Side-by-side Profile and Categories)       */}
       {/* ======================================================== */}
       <div className="hidden md:block space-y-8">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Pengaturan & Kategori</h1>
-            <p className="text-sm text-slate-500 mt-1">Kelola profil dan konfigurasi kategori keuanganmu</p>
-          </div>
-          <Button icon={Plus} onClick={() => setShowModal(true)} className="bg-[#1A2C4C] text-white">
-            Tambah Kategori
-          </Button>
-        </div>
+        <PageHeader
+          title="Pengaturan & Kategori"
+          subtitle="Kelola profil dan konfigurasi kategori keuanganmu"
+          showBack={false}
+          rightAction={
+            <Button icon={Plus} onClick={() => setShowModal(true)} className="bg-[#1A2C4C] text-white text-xs">
+              Tambah Kategori
+            </Button>
+          }
+        />
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Profile Card on Desktop */}

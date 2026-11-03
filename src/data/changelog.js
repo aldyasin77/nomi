@@ -1,8 +1,21 @@
 export const changelog = [
   {
-    version: 'v1.3.4',
+    version: 'v1.3.5',
     date: '3 Nov 2026',
     isLatest: true,
+    features: [
+      'Fitur Edit Transaksi & Rekonsiliasi Saldo: Baris transaksi kini dapat diklik untuk membuka modal form edit yang terisi otomatis. Saldo dompet direkonsiliasi ulang secara atomik (revert transaksi lama dan apply transaksi baru) baik di Supabase maupun mode demo',
+      'Urutan Kronologis Mutlak (created_at DESC): Penyempurnaan fetch Supabase dan pengelompokan tanggal frontend dengan tie-breaker created_at descending sehingga transaksi terbaru di hari yang sama selalu berada paling atas',
+      'Komponen Header Tersentralisasi (PageHeader): Implementasi iOS-style sticky header (backdrop-blur-lg z-30) reusable di seluruh halaman dengan navigasi tombol kembali, tipografi seragam, dan slot aksi kanan (rightAction)',
+      'Halaman Khusus Budget Progress (/budget): Pemisahan fitur budget ke halaman terpisah yang bersih dan minimalis, menjadikan beranda mobile berfokus pada riwayat transaksi cepat',
+      'Redesign Card Anggaran (All-in-One): Konsolidasi summary card menjadi satu kartu utama dengan progress bar tebal persentase pemakaian dan split-view grid untuk nominal Terpakai dan Sisa Anggaran',
+      'Interaktivitas Riwayat Transaksi Kategori Budget: Item pada Budget Progress kini dapat diklik untuk membuka modal drawer transaksi yang difilter spesifik per kategori pada bulan berjalan',
+    ],
+  },
+  {
+    version: 'v1.3.4',
+    date: '3 Nov 2026',
+    isLatest: false,
     features: [
       'Eksekusi Atomik Transaksi Rutin (Supabase RPC): Logika pencatatan transaksi rutin yang jatuh tempo kini diproses sepenuhnya oleh Database Function PostgreSQL (process_due_transactions) dengan row-level lock (FOR UPDATE), menjamin 100% bebas dari duplikasi data atau race condition saat dibuka bersamaan di Desktop dan Mobile',
       'Sinkronisasi Total Filter Transaksi: Pembaruan master state tersaring (filteredTransactionsByDate) pada halaman Transaksi sehingga pilihan Bulan & Tahun langsung memperbarui Summary Card (Total Income & Outcome), grafik chart, dan riwayat mutasi secara konsisten',

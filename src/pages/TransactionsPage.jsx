@@ -7,6 +7,7 @@ import {
   ChevronDown,
   Search,
   MoreHorizontal,
+  Pencil,
 } from 'lucide-react'
 import {
   ResponsiveContainer,
@@ -23,6 +24,7 @@ import { useCategories } from '../hooks/useCategories'
 import TransactionModal from '../components/transactions/TransactionModal'
 import GlassCard from '../components/ui/GlassCard'
 import Button from '../components/ui/Button'
+import PageHeader from '@/components/common/PageHeader'
 import toast from 'react-hot-toast'
 import { extractCategoryEmojiAndName } from '@/lib/categoryUtils'
 import {
@@ -102,6 +104,7 @@ const ChartCustomTooltip = ({ active, payload, label, selectedMonth, selectedYea
 
 export default function TransactionsPage() {
   const [showModal, setShowModal] = useState(false)
+  const [editingTransaction, setEditingTransaction] = useState(null)
   const [typeFilter, setTypeFilter] = useState('')
   const [searchQuery, setSearchQuery] = useState('')
 
@@ -113,7 +116,7 @@ export default function TransactionsPage() {
   const { categories } = useCategories()
 
   // Ambil semua transaksi tanpa filter type agar data chart selalu lengkap
-  const { transactions, refetch, addTransaction } = useTransactions()
+  const { transactions, refetch, addTransaction, updateTransaction } = useTransactions()
 
   const handleAddTransaction = async (payload) => {
     try {
@@ -124,6 +127,21 @@ export default function TransactionsPage() {
       return data
     } catch (err) {
       toast.error(err.message || 'Gagal mencatat transaksi')
+      throw err
+    }
+  }
+
+  const handleUpdateTransaction = async (payload) => {
+    if (!editingTransaction) return
+    try {
+      const data = await updateTransaction(editingTransaction.id, payload, editingTransaction)
+      toast.success('Transaksi berhasil diperbarui!')
+      setEditingTransaction(null)
+      refetch()
+      refetchWallets()
+      return data
+    } catch (err) {
+      toast.error(err.message || 'Gagal memperbarui transaksi')
       throw err
     }
   }
@@ -284,24 +302,21 @@ export default function TransactionsPage() {
 
   return (
     <div className="space-y-6 animate-fade-in relative pb-16">
-      {/* 1. Header Page */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-slate-900 dark:text-white tracking-tight">
-            Transactions
-          </h1>
-          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-            Lacak riwayat pemasukan, pengeluaran, dan mutasi saldo
-          </p>
-        </div>
-        <Button
-          onClick={() => setShowModal(true)}
-          className="hidden md:inline-flex bg-[#1A2C4C] hover:bg-[#13223b] text-white"
-          icon={Plus}
-        >
-          Add Transaction
-        </Button>
-      </div>
+      {/* 1. Reusable Sticky Page Header */}
+      <PageHeader
+        title="Transactions"
+        subtitle="Lacak riwayat pemasukan, pengeluaran, dan mutasi saldo"
+        showBack={false}
+        rightAction={
+          <Button
+            onClick={() => setShowModal(true)}
+            className="hidden md:inline-flex bg-[#1A2C4C] hover:bg-[#13223b] text-white text-xs"
+            icon={Plus}
+          >
+            Add Transaction
+          </Button>
+        }
+      />
 
       {/* 2. BAGIAN 2: Transaction Overview Card with Recharts Area Chart */}
       <GlassCard className="p-5 sm:p-6 rounded-3xl bg-white dark:bg-slate-900 shadow-[0_10px_30px_rgba(0,0,0,0.04)] border border-slate-100 dark:border-slate-800">
@@ -603,7 +618,8 @@ export default function TransactionsPage() {
                     return (
                       <div
                         key={tx.id}
-                        className="flex items-center justify-between py-3 border-b border-slate-100 dark:border-slate-800/80 last:border-b-0 hover:bg-slate-50/50 dark:hover:bg-slate-800/40 transition-colors"
+                        onClick={() => setEditingTransaction(tx)}
+                        className="flex items-center justify-between py-3 border-b border-slate-100 dark:border-slate-800/80 last:border-b-0 hover:bg-slate-50/80 dark:hover:bg-slate-800/50 rounded-2xl px-2.5 -mx-2.5 transition-all cursor-pointer group"
                       >
                         {/* Kiri: Ikon */}
                         <div className="flex items-center gap-3.5 min-w-0 pr-2">
@@ -640,25 +656,41 @@ export default function TransactionsPage() {
                           </div>
                         </div>
 
-                        {/* Kanan: Nominal (+/-) & Sisa Saldo */}
-                        <div className="text-right shrink-0">
-                          <p
-                            className={`text-base font-bold tracking-tight ${
-                              isIncome
-                                ? 'text-blue-600 dark:text-blue-400'
-                                : isExpense
-                                  ? 'text-red-500 dark:text-red-400'
-                                  : 'text-indigo-600 dark:text-indigo-400'
-                            }`}
-                          >
-                            {isIncome ? '+' : isExpense ? '-' : ''}
-                            {formatCurrency(amt)}
-                          </p>
-                          {balanceAfter !== undefined && (
-                            <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5">
-                              saldo {formatCurrency(balanceAfter)}
+                        {/* Kanan: Nominal (+/-), Sisa Saldo, dan Ikon Pensil Edit */}
+                        <div className="flex items-center gap-2 shrink-0">
+                          <div className="text-right">
+                            <p
+                              className={`text-base font-bold tracking-tight ${
+                                isIncome
+                                  ? 'text-blue-600 dark:text-blue-400'
+                                  : isExpense
+                                    ? 'text-red-500 dark:text-red-400'
+                                    : 'text-indigo-600 dark:text-indigo-400'
+                              }`}
+                            >
+                              {isIncome ? '+' : isExpense ? '-' : ''}
+                              {formatCurrency(amt)}
                             </p>
-                          )}
+                            {balanceAfter !== undefined && (
+                              <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5">
+                                saldo {formatCurrency(balanceAfter)}
+                              </p>
+                            )}
+                          </div>
+
+                          {/* Tombol Pensil Edit */}
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              setEditingTransaction(tx)
+                            }}
+                            className="w-8 h-8 rounded-full flex items-center justify-center text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 opacity-60 sm:opacity-0 sm:group-hover:opacity-100 transition-all cursor-pointer"
+                            title="Edit transaksi"
+                            aria-label="Edit transaksi"
+                          >
+                            <Pencil size={15} />
+                          </button>
                         </div>
                       </div>
                     )
@@ -672,11 +704,15 @@ export default function TransactionsPage() {
 
       {/* Transaction Modal Bottom Sheet */}
       <TransactionModal
-        isOpen={showModal}
-        onClose={() => setShowModal(false)}
-        onSubmit={handleAddTransaction}
+        isOpen={showModal || Boolean(editingTransaction)}
+        onClose={() => {
+          setShowModal(false)
+          setEditingTransaction(null)
+        }}
+        onSubmit={editingTransaction ? handleUpdateTransaction : handleAddTransaction}
         wallets={wallets}
         categories={categories}
+        initialData={editingTransaction}
       />
     </div>
   )

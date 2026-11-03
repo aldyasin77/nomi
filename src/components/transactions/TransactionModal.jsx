@@ -26,17 +26,22 @@ export default function TransactionModal({
   initialTab = 'expense',
   initialType,
   initialWalletId,
+  initialData = null,
 }) {
   const isDesktop = useMediaQuery('(min-width: 768px)')
+  const isEditing = Boolean(initialData)
 
-  const modalTitle =
-    initialTab === 'transfer' || initialType === 'transfer'
-      ? 'Transfer Dana'
-      : initialTab === 'income' || initialType === 'income'
-      ? 'Tambah Pemasukan'
-      : 'Tambah Transaksi'
+  const modalTitle = isEditing
+    ? 'Edit Transaksi'
+    : initialTab === 'transfer' || initialType === 'transfer'
+    ? 'Transfer Dana'
+    : initialTab === 'income' || initialType === 'income'
+    ? 'Tambah Pemasukan'
+    : 'Tambah Transaksi'
 
-  const modalSubtitle = 'Catat aktivitas keuanganmu dengan mudah'
+  const modalSubtitle = isEditing
+    ? 'Perbarui detail transaksi dan saldo akan disesuaikan otomatis'
+    : 'Catat aktivitas keuanganmu dengan mudah'
 
   // DESKTOP / TABLET (Centered Dialog)
   if (isDesktop) {
@@ -60,6 +65,7 @@ export default function TransactionModal({
             initialTab={initialTab}
             initialType={initialType}
             initialWalletId={initialWalletId}
+            initialData={initialData}
           />
         </DialogContent>
       </Dialog>
@@ -86,7 +92,7 @@ export default function TransactionModal({
             </button>
           </DrawerClose>
           <DrawerTitle className="text-base font-bold text-slate-900 dark:text-white text-center">
-            Catat transaksi
+            {isEditing ? 'Edit transaksi' : 'Catat transaksi'}
           </DrawerTitle>
           <div className="w-8 h-8" /> {/* spacer for perfect center */}
         </DrawerHeader>
@@ -100,6 +106,7 @@ export default function TransactionModal({
             initialTab={initialTab}
             initialType={initialType}
             initialWalletId={initialWalletId}
+            initialData={initialData}
           />
         </div>
       </DrawerContent>

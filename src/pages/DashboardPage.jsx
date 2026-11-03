@@ -367,9 +367,9 @@ export default function DashboardPage() {
               <div className="flex flex-col items-center gap-1.5">
                 <button
                   type="button"
-                  onClick={() => navigate('/settings')}
+                  onClick={() => navigate('/budget')}
                   className="w-14 h-14 rounded-full bg-purple-50 border border-purple-100/80 text-purple-800 flex items-center justify-center shadow-xs active:scale-95 transition-transform cursor-pointer"
-                  aria-label="Category Limits"
+                  aria-label="Budget Progress"
                 >
                   <Target size={20} strokeWidth={2.2} />
                 </button>
@@ -425,7 +425,11 @@ export default function DashboardPage() {
 
         {/* Budget + Recent Transactions Row */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <BudgetSection budgets={budgets} />
+          <BudgetSection
+            budgets={budgets}
+            startDate={currentMonth.startDate}
+            endDate={currentMonth.endDate}
+          />
           <RecentTransactions transactions={recentTransactions} showViewAll={true} />
         </div>
       </div>

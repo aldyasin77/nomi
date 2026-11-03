@@ -13,6 +13,7 @@ import RecurringCard from '@/components/recurring/RecurringCard'
 import RecurringModal from '@/components/recurring/RecurringModal'
 import Button from '@/components/ui/Button'
 import EmptyState from '@/components/ui/EmptyState'
+import PageHeader from '@/components/common/PageHeader'
 import toast from 'react-hot-toast'
 
 const formatCurrency = (amount) => {
@@ -171,32 +172,21 @@ export default function RecurringPage() {
 
   return (
     <div className="space-y-6 animate-fade-in">
-      {/* 1. Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <div className="flex items-center gap-2.5">
-            <div className="w-10 h-10 rounded-2xl bg-indigo-50 border border-indigo-100 flex items-center justify-center text-[#1A2C4C] shadow-xs">
-              <CalendarClock size={20} />
-            </div>
-            <div>
-              <h1 className="text-2xl font-extrabold text-slate-900 tracking-tight">
-                Langganan & Rutin
-              </h1>
-              <p className="text-xs sm:text-sm text-slate-500 mt-0.5">
-                Kelola tagihan berulang, langganan bulanan, dan jadwal otomatis
-              </p>
-            </div>
-          </div>
-        </div>
-
-        <Button
-          icon={Plus}
-          onClick={handleOpenAdd}
-          className="bg-[#1A2C4C] hover:bg-[#13223b] text-white shadow-md shadow-indigo-950/15"
-        >
-          Tambah Rutin
-        </Button>
-      </div>
+      {/* 1. Reusable Sticky Page Header */}
+      <PageHeader
+        title="Langganan & Rutin"
+        subtitle="Kelola tagihan berulang, langganan bulanan, dan jadwal otomatis"
+        showBack={false}
+        rightAction={
+          <Button
+            icon={Plus}
+            onClick={handleOpenAdd}
+            className="bg-[#1A2C4C] hover:bg-[#13223b] text-white text-xs shadow-md shadow-indigo-950/15"
+          >
+            Tambah Rutin
+          </Button>
+        }
+      />
 
       {/* 2. KPI Summary Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">

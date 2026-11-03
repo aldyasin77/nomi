@@ -70,9 +70,16 @@ export function useTransactions(filters = {}) {
       if (filters.walletId) {
         list = list.filter(t => t.wallet_id === filters.walletId || t.to_wallet_id === filters.walletId)
       }
+      if (filters.categoryId) {
+        list = list.filter(t => t.category_id === filters.categoryId)
+      }
 
-      // Sort by transaction_date desc
-      list.sort((a, b) => new Date(b.transaction_date) - new Date(a.transaction_date))
+      // Sort by transaction_date desc, tie-break by created_at desc
+      list.sort((a, b) => {
+        const dateDiff = new Date(b.transaction_date || 0) - new Date(a.transaction_date || 0)
+        if (dateDiff !== 0) return dateDiff
+        return new Date(b.created_at || 0) - new Date(a.created_at || 0)
+      })
 
       // Apply limit
       if (filters.limit) {
@@ -93,11 +100,13 @@ export function useTransactions(filters = {}) {
         category:categories(id, name, type)
       `)
       .order('transaction_date', { ascending: false })
+      .order('created_at', { ascending: false })
 
     if (filters.startDate) query = query.gte('transaction_date', filters.startDate)
     if (filters.endDate) query = query.lte('transaction_date', filters.endDate)
     if (filters.type) query = query.eq('type', filters.type)
     if (filters.walletId) query = query.eq('wallet_id', filters.walletId)
+    if (filters.categoryId) query = query.eq('category_id', filters.categoryId)
     if (filters.limit) query = query.limit(filters.limit)
 
     const { data, error } = await query
@@ -109,7 +118,7 @@ export function useTransactions(filters = {}) {
       setTransactions(data || [])
     }
     setLoading(false)
-  }, [isDemo, filters.startDate, filters.endDate, filters.type, filters.walletId, filters.limit])
+  }, [isDemo, filters.startDate, filters.endDate, filters.type, filters.walletId, filters.categoryId, filters.limit])
 
   useEffect(() => {
     fetchTransactions()
@@ -176,23 +185,101 @@ export function useTransactions(filters = {}) {
     return data
   }
 
-  const updateTransaction = async (id, updates) => {
+  const updateTransaction = async (id, updates, oldTransaction = null) => {
     if (isDemo) {
       const allTxns = getStoredTransactions()
-      const updated = allTxns.map(t => t.id === id ? { ...t, ...updates } : t)
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(updated))
+      const targetTx = oldTransaction || allTxns.find(t => t.id === id)
+      const wallets = getStoredWallets()
+      const categories = getStoredCategories()
+
+      const newAmount = parseFloat(updates.amount !== undefined ? updates.amount : targetTx?.amount) || 0
+      const newType = updates.type || targetTx?.type || 'expense'
+      const newWalletId = updates.wallet_id !== undefined ? updates.wallet_id : targetTx?.wallet_id
+      const newToWalletId = updates.to_wallet_id !== undefined ? updates.to_wallet_id : targetTx?.to_wallet_id
+
+      // 1. Rekonsiliasi Saldo Dompet (Revert OLD, Apply NEW)
+      let updatedWallets = [...wallets]
+      if (targetTx) {
+        const oldAmount = parseFloat(targetTx.amount) || 0
+        const oldType = targetTx.type
+        const oldWalletId = targetTx.wallet_id
+        const oldToWalletId = targetTx.to_wallet_id
+
+        // Revert efek lama (OLD)
+        updatedWallets = updatedWallets.map(w => {
+          let bal = parseFloat(w.balance) || 0
+          if (oldType === 'income' && w.id === oldWalletId) {
+            bal -= oldAmount
+          } else if (oldType === 'expense' && w.id === oldWalletId) {
+            bal += oldAmount
+          } else if (oldType === 'transfer') {
+            if (w.id === oldWalletId) bal += oldAmount
+            if (w.id === oldToWalletId) bal -= oldAmount
+          }
+          return { ...w, balance: bal }
+        })
+
+        // Terapkan efek baru (NEW)
+        updatedWallets = updatedWallets.map(w => {
+          let bal = parseFloat(w.balance) || 0
+          if (newType === 'income' && w.id === newWalletId) {
+            bal += newAmount
+          } else if (newType === 'expense' && w.id === newWalletId) {
+            bal -= newAmount
+          } else if (newType === 'transfer') {
+            if (w.id === newWalletId) bal -= newAmount
+            if (w.id === newToWalletId) bal += newAmount
+          }
+          return { ...w, balance: bal }
+        })
+      }
+
+      localStorage.setItem(WALLETS_KEY, JSON.stringify(updatedWallets))
+
+      // 2. Perbarui transaksi di list
+      const updatedTxns = allTxns.map(t => {
+        if (t.id === id) {
+          const nextCategory = updates.category_id !== undefined
+            ? (categories.find(c => c.id === updates.category_id) || null)
+            : t.category
+          return {
+            ...t,
+            ...updates,
+            amount: newAmount,
+            type: newType,
+            wallet_id: newWalletId,
+            to_wallet_id: newType === 'transfer' ? newToWalletId : null,
+            wallet: updatedWallets.find(w => w.id === newWalletId) || null,
+            to_wallet: newType === 'transfer' ? (updatedWallets.find(w => w.id === newToWalletId) || null) : null,
+            category: newType === 'transfer' ? null : nextCategory,
+          }
+        }
+        return t
+      })
+
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(updatedTxns))
+      window.dispatchEvent(new Event('nomi_data_changed'))
       await fetchTransactions()
-      return updated.find(t => t.id === id)
+      return updatedTxns.find(t => t.id === id)
     }
 
+    // SUPABASE MODE:
+    // Update ke tabel transactions. Trigger PostgreSQL (trigger_update_wallet_balance)
+    // akan secara otomatis dan atomik merevert saldo dompet lama dan menerapkan saldo dompet baru.
     const { data, error } = await supabase
       .from('transactions')
       .update(updates)
       .eq('id', id)
-      .select()
+      .select(`
+        *,
+        wallet:wallets!wallet_id(id, name, type),
+        to_wallet:wallets!to_wallet_id(id, name, type),
+        category:categories(id, name, type)
+      `)
       .single()
     
     if (error) throw error
+    window.dispatchEvent(new Event('nomi_data_changed'))
     await fetchTransactions()
     return data
   }

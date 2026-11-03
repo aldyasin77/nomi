@@ -20,8 +20,11 @@ export function useBudgets(categories, transactions) {
       const remaining = limit - spent
 
       return {
+        id: category.id,
         categoryId: category.id,
+        name: category.name,
         categoryName: category.name,
+        category,
         spent,
         limit,
         percentage: Math.min(percentage, 100),

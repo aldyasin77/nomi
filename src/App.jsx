@@ -15,6 +15,7 @@ import WalletDetailPage from './pages/WalletDetailPage'
 import TransactionsPage from './pages/TransactionsPage'
 import RecurringPage from './pages/RecurringPage'
 import SettingsPage from './pages/SettingsPage'
+import BudgetPage from './pages/BudgetPage'
 
 function AppLayout() {
   const { user } = useAuth()
@@ -112,6 +113,7 @@ export default function App() {
             <Route path="/wallet/:id" element={<WalletDetailPage />} />
             <Route path="/wallets/:id" element={<WalletDetailPage />} />
             <Route path="/transactions" element={<TransactionsPage />} />
+            <Route path="/budget" element={<BudgetPage />} />
             <Route path="/recurring" element={<RecurringPage />} />
             <Route path="/settings" element={<SettingsPage />} />
           </Route>

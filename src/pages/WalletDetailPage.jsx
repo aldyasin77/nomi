@@ -19,6 +19,7 @@ import { supabase, isSupabaseConfigured } from '@/lib/supabase'
 import BankItemIcon from '@/components/wallets/BankItemIcon'
 import WalletFormModal from '@/components/wallets/WalletFormModal'
 import TransactionModal from '@/components/transactions/TransactionModal'
+import PageHeader from '@/components/common/PageHeader'
 import { Button } from '@/components/ui/Button'
 import {
   Dialog,
@@ -64,7 +65,7 @@ export default function WalletDetailPage() {
 
   const { user } = useAuth()
   const { wallets, loading: walletsLoading, updateWallet } = useWallets()
-  const { transactions, addTransaction } = useTransactions()
+  const { transactions, addTransaction, updateTransaction } = useTransactions()
   const { categories, addCategory } = useCategories()
 
   // Find target wallet
@@ -84,6 +85,7 @@ export default function WalletDetailPage() {
   const isMobile = useIsMobile()
   const [showEditModal, setShowEditModal] = useState(false)
   const [showTransactionModal, setShowTransactionModal] = useState(false)
+  const [editingTransaction, setEditingTransaction] = useState(null)
   const [transactionModalTab, setTransactionModalTab] = useState('expense')
   const [showAdjustBalanceModal, setShowAdjustBalanceModal] = useState(false)
   const [newBalanceInput, setNewBalanceInput] = useState('')
@@ -149,7 +151,10 @@ export default function WalletDetailPage() {
       const rawB = b.transaction_date || b.created_at
       const dateA = rawA ? new Date(rawA).getTime() : 0
       const dateB = rawB ? new Date(rawB).getTime() : 0
-      return dateB - dateA
+      if (dateB !== dateA) return dateB - dateA
+      const createdA = a.created_at ? new Date(a.created_at).getTime() : 0
+      const createdB = b.created_at ? new Date(b.created_at).getTime() : 0
+      return createdB - createdA
     })
 
     let currentBalance = parseFloat(wallet.balance) || 0
@@ -206,7 +211,10 @@ export default function WalletDetailPage() {
         const rawB = b.transaction_date || b.created_at
         const dateA = rawA ? new Date(rawA).getTime() : 0
         const dateB = rawB ? new Date(rawB).getTime() : 0
-        return dateB - dateA
+        if (dateB !== dateA) return dateB - dateA
+        const createdA = a.created_at ? new Date(a.created_at).getTime() : 0
+        const createdB = b.created_at ? new Date(b.created_at).getTime() : 0
+        return createdB - createdA
       })
       .map((tx) => ({
         ...tx,
@@ -312,14 +320,20 @@ export default function WalletDetailPage() {
     }
   }
 
-  // Quick Action: Handle Transaction Submit
+  // Quick Action: Handle Transaction Submit (Add or Edit)
   const handleTransactionSubmit = async (data) => {
     try {
-      await addTransaction(data)
-      toast.success('Transaksi berhasil dicatat!')
+      if (editingTransaction) {
+        await updateTransaction(editingTransaction.id, data, editingTransaction)
+        toast.success('Transaksi berhasil diperbarui!')
+        setEditingTransaction(null)
+      } else {
+        await addTransaction(data)
+        toast.success('Transaksi berhasil dicatat!')
+      }
       setShowTransactionModal(false)
     } catch (err) {
-      toast.error(err.message || 'Gagal mencatat transaksi')
+      toast.error(err.message || 'Gagal menyimpan transaksi')
       throw err
     }
   }
@@ -349,6 +363,24 @@ export default function WalletDetailPage() {
 
   return (
     <div className="max-w-5xl mx-auto space-y-6 animate-fade-in pb-12">
+      {/* 1. Reusable Sticky Page Header */}
+      <PageHeader
+        title={wallet.name}
+        subtitle={wallet.type?.replace('_', ' ') || 'Tabungan'}
+        showBack={true}
+        onBack={() => navigate('/wallets')}
+        rightAction={
+          <button
+            type="button"
+            onClick={() => setShowEditModal(true)}
+            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-semibold bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 transition-colors cursor-pointer shrink-0"
+          >
+            <Pencil className="w-3.5 h-3.5" />
+            <span>Ubah</span>
+          </button>
+        }
+      />
+
       {/* Responsive Grid: Mobile = stack (col-1), Desktop = 3 cols (1/3 left, 2/3 right) */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8 items-start">
         {/* ========================================================= */}
@@ -356,42 +388,21 @@ export default function WalletDetailPage() {
         {/* ========================================================= */}
         <div className="md:col-span-1 md:sticky md:top-6 space-y-4">
           <div className="bg-white dark:bg-slate-900 rounded-3xl p-5 sm:p-6 border border-slate-200/80 dark:border-slate-800 shadow-sm">
-            {/* Top Navigation Row: Back Button + Wallet Info (Logo, Name, Type) on Left, Edit Button on Right */}
-            <div className="flex items-center justify-between gap-2 pb-3.5 border-b border-slate-100 dark:border-slate-800">
-              <div className="flex items-center gap-2 min-w-0 flex-1">
-                <button
-                  type="button"
-                  onClick={() => navigate('/wallets')}
-                  className="p-1.5 -ml-1 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300 transition-colors cursor-pointer shrink-0"
-                  aria-label="Kembali"
-                >
-                  <ArrowLeft className="w-5 h-5" />
-                </button>
-
-                <BankItemIcon
-                  item={wallet}
-                  size="sm"
-                  className="w-9 h-9 min-w-[36px] shadow-2xs shrink-0"
-                />
-
-                <div className="min-w-0 flex-1">
-                  <h1 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white truncate tracking-tight leading-tight">
-                    {wallet.name}
-                  </h1>
-                  <p className="text-xs text-slate-500 font-medium capitalize mt-0.5 leading-none truncate">
-                    {wallet.type?.replace('_', ' ') || 'Tabungan'}
-                  </p>
-                </div>
+            {/* Wallet Info Badge */}
+            <div className="flex items-center gap-3 pb-3.5 border-b border-slate-100 dark:border-slate-800">
+              <BankItemIcon
+                item={wallet}
+                size="sm"
+                className="w-10 h-10 min-w-[40px] shadow-2xs shrink-0"
+              />
+              <div className="min-w-0 flex-1">
+                <h2 className="text-base font-bold text-slate-900 dark:text-white truncate tracking-tight leading-tight">
+                  {wallet.name}
+                </h2>
+                <p className="text-xs text-slate-500 font-medium capitalize mt-0.5 leading-none truncate">
+                  {wallet.type?.replace('_', ' ') || 'Tabungan'}
+                </p>
               </div>
-
-              <button
-                type="button"
-                onClick={() => setShowEditModal(true)}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 transition-colors cursor-pointer shrink-0"
-              >
-                <Pencil className="w-3.5 h-3.5" />
-                <span>Ubah</span>
-              </button>
             </div>
 
             {/* Total Balance */}
@@ -614,7 +625,11 @@ export default function WalletDetailPage() {
                         return (
                           <div
                             key={tx.id}
-                            className="flex items-center justify-between py-3.5 hover:bg-slate-50/50 dark:hover:bg-slate-800/40 transition-colors"
+                            onClick={() => {
+                              setEditingTransaction(tx)
+                              setShowTransactionModal(true)
+                            }}
+                            className="flex items-center justify-between py-3.5 hover:bg-slate-50/80 dark:hover:bg-slate-800/50 rounded-2xl px-2.5 -mx-2.5 transition-all cursor-pointer group"
                           >
                             {/* Left: Icon & Category/Title */}
                             <div className="flex items-center gap-3.5 min-w-0 pr-2">
@@ -639,22 +654,38 @@ export default function WalletDetailPage() {
                               </div>
                             </div>
 
-                            {/* Right: Amount & Sisa Saldo */}
-                            <div className="text-right shrink-0">
-                              <p
-                                className={`text-base font-bold tracking-tight ${isIncome
-                                    ? 'text-blue-600 dark:text-blue-400'
-                                    : 'text-red-500 dark:text-red-400'
-                                  }`}
-                              >
-                                {isIncome ? '' : '-'}
-                                {formatCurrency(amt)}
-                              </p>
-                              {runningBalance !== undefined && (
-                                <p className="text-xs text-slate-400 mt-0.5">
-                                  saldo {formatCurrency(Math.abs(runningBalance) < 0.0001 ? 0 : runningBalance)}
+                            {/* Right: Amount, Sisa Saldo & Pencil Icon */}
+                            <div className="flex items-center gap-2 shrink-0">
+                              <div className="text-right">
+                                <p
+                                  className={`text-base font-bold tracking-tight ${isIncome
+                                      ? 'text-blue-600 dark:text-blue-400'
+                                      : 'text-red-500 dark:text-red-400'
+                                    }`}
+                                >
+                                  {isIncome ? '' : '-'}
+                                  {formatCurrency(amt)}
                                 </p>
-                              )}
+                                {runningBalance !== undefined && (
+                                  <p className="text-xs text-slate-400 mt-0.5">
+                                    saldo {formatCurrency(Math.abs(runningBalance) < 0.0001 ? 0 : runningBalance)}
+                                  </p>
+                                )}
+                              </div>
+
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                  setEditingTransaction(tx)
+                                  setShowTransactionModal(true)
+                                }}
+                                className="w-8 h-8 rounded-full flex items-center justify-center text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 opacity-60 sm:opacity-0 sm:group-hover:opacity-100 transition-all cursor-pointer"
+                                title="Edit transaksi"
+                                aria-label="Edit transaksi"
+                              >
+                                <Pencil size={15} />
+                              </button>
                             </div>
                           </div>
                         )
@@ -686,13 +717,17 @@ export default function WalletDetailPage() {
       {showTransactionModal && (
         <TransactionModal
           isOpen={showTransactionModal}
-          onClose={() => setShowTransactionModal(false)}
+          onClose={() => {
+            setShowTransactionModal(false)
+            setEditingTransaction(null)
+          }}
           onSubmit={handleTransactionSubmit}
           wallets={wallets}
           categories={categories}
           initialTab={transactionModalTab}
           initialType={transactionModalTab}
           initialWalletId={wallet.id}
+          initialData={editingTransaction}
         />
       )}
 
