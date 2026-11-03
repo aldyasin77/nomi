@@ -106,8 +106,8 @@ export default function TransactionsPage() {
   const [searchQuery, setSearchQuery] = useState('')
 
   // Chart filters: Bulan (default bulan saat ini) & Tahun
-  const [selectedMonth, setSelectedMonth] = useState(() => new Date().getMonth())
-  const [selectedYear, setSelectedYear] = useState(() => new Date().getFullYear())
+  const [selectedMonth, setSelectedMonth] = useState(() => getJakartaDate(new Date()).getMonth())
+  const [selectedYear, setSelectedYear] = useState(() => getJakartaDate(new Date()).getFullYear())
 
   const { wallets, refetch: refetchWallets } = useWallets()
   const { categories } = useCategories()
@@ -128,6 +128,20 @@ export default function TransactionsPage() {
     }
   }
 
+  // Master Derived State: Menyaring transaksi berdasarkan selectedMonth & selectedYear (Timezone Safe Asia/Jakarta)
+  const filteredTransactionsByDate = useMemo(() => {
+    return transactions.filter((t) => {
+      const rawDate = t.transaction_date || t.created_at
+      if (!rawDate) return false
+      const d = getJakartaDate(rawDate)
+      if (d.getFullYear() !== selectedYear) return false
+      if (selectedMonth !== 'all' && d.getMonth() !== Number(selectedMonth)) {
+        return false
+      }
+      return true
+    })
+  }, [transactions, selectedYear, selectedMonth])
+
   // BAGIAN 2: Logika Data Chart Dinamis (Harian per Bulan atau Bulanan per Tahun)
   const chartData = useMemo(() => {
     // Mode 1: Jika 'Semua Bulan' dipilih -> X-Axis = 12 Bulan (JAN - DES)
@@ -139,18 +153,16 @@ export default function TransactionsPage() {
         expense: 0,
       }))
 
-      transactions.forEach((t) => {
+      filteredTransactionsByDate.forEach((t) => {
         const rawDate = t.transaction_date || t.created_at
         if (!rawDate) return
         const d = getJakartaDate(rawDate)
-        if (d.getFullYear() === selectedYear) {
-          const mIdx = d.getMonth()
-          const amt = parseFloat(t.amount) || 0
-          if (t.type === 'income') {
-            months[mIdx].income += amt
-          } else if (t.type === 'expense') {
-            months[mIdx].expense += amt
-          }
+        const mIdx = d.getMonth()
+        const amt = parseFloat(t.amount) || 0
+        if (t.type === 'income') {
+          months[mIdx].income += amt
+        } else if (t.type === 'expense') {
+          months[mIdx].expense += amt
         }
       })
 
@@ -168,38 +180,36 @@ export default function TransactionsPage() {
       expense: 0,
     }))
 
-    transactions.forEach((t) => {
+    filteredTransactionsByDate.forEach((t) => {
       const rawDate = t.transaction_date || t.created_at
       if (!rawDate) return
       const d = getJakartaDate(rawDate)
-      if (d.getFullYear() === selectedYear && d.getMonth() === monthNum) {
-        const dayIdx = d.getDate() - 1
-        const amt = parseFloat(t.amount) || 0
-        if (dayIdx >= 0 && dayIdx < daysInMonth) {
-          if (t.type === 'income') {
-            days[dayIdx].income += amt
-          } else if (t.type === 'expense') {
-            days[dayIdx].expense += amt
-          }
+      const dayIdx = d.getDate() - 1
+      const amt = parseFloat(t.amount) || 0
+      if (dayIdx >= 0 && dayIdx < daysInMonth) {
+        if (t.type === 'income') {
+          days[dayIdx].income += amt
+        } else if (t.type === 'expense') {
+          days[dayIdx].expense += amt
         }
       }
     })
 
     return days
-  }, [transactions, selectedYear, selectedMonth])
+  }, [filteredTransactionsByDate, selectedYear, selectedMonth])
 
-  // Summary statistics (Total Income & Outcome keseluruhan)
+  // Summary statistics (Total Income & Outcome tersaring akurat berdasarkan Bulan & Tahun yang dipilih)
   const totalIncome = useMemo(() => {
-    return transactions
+    return filteredTransactionsByDate
       .filter((t) => t.type === 'income')
       .reduce((sum, t) => sum + (parseFloat(t.amount) || 0), 0)
-  }, [transactions])
+  }, [filteredTransactionsByDate])
 
   const totalExpense = useMemo(() => {
-    return transactions
+    return filteredTransactionsByDate
       .filter((t) => t.type === 'expense')
       .reduce((sum, t) => sum + (parseFloat(t.amount) || 0), 0)
-  }, [transactions])
+  }, [filteredTransactionsByDate])
 
   // Hitung saldo berjalan (running balance) historis per dompet
   const runningBalancesMap = useMemo(() => {
@@ -252,9 +262,9 @@ export default function TransactionsPage() {
     return map
   }, [transactions, wallets])
 
-  // Filter transaksi untuk list berdasarkan tipe dan search query
+  // Filter transaksi untuk list: berbasis filteredTransactionsByDate, lalu disaring tipe & search query
   const filteredTransactions = useMemo(() => {
-    return transactions.filter((t) => {
+    return filteredTransactionsByDate.filter((t) => {
       if (typeFilter && t.type !== typeFilter) return false
       if (!searchQuery.trim()) return true
       const q = searchQuery.toLowerCase()
@@ -265,7 +275,7 @@ export default function TransactionsPage() {
         t.to_wallet?.name?.toLowerCase().includes(q)
       )
     })
-  }, [transactions, typeFilter, searchQuery])
+  }, [filteredTransactionsByDate, typeFilter, searchQuery])
 
   // BAGIAN 1: Grouping transaksi berdasarkan tanggal
   const groupedTransactions = useMemo(() => {

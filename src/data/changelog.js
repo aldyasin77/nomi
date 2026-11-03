@@ -1,8 +1,21 @@
 export const changelog = [
   {
+    version: 'v1.3.4',
+    date: '3 Nov 2026',
+    isLatest: true,
+    features: [
+      'Eksekusi Atomik Transaksi Rutin (Supabase RPC): Logika pencatatan transaksi rutin yang jatuh tempo kini diproses sepenuhnya oleh Database Function PostgreSQL (process_due_transactions) dengan row-level lock (FOR UPDATE), menjamin 100% bebas dari duplikasi data atau race condition saat dibuka bersamaan di Desktop dan Mobile',
+      'Sinkronisasi Total Filter Transaksi: Pembaruan master state tersaring (filteredTransactionsByDate) pada halaman Transaksi sehingga pilihan Bulan & Tahun langsung memperbarui Summary Card (Total Income & Outcome), grafik chart, dan riwayat mutasi secara konsisten',
+      'Timezone-Safe Filter Asia/Jakarta: Penyesuaian kalkulasi kalender transaksi menggunakan zona waktu WIB agar transaksi di akhir bulan tidak salah masuk ke bulan berikutnya',
+      'Kalkulasi Bersih Bunga Simpanan & Pajak 20%: Otomasi perhitungan bunga simpanan berkala beserta potongan pajak bunga 20% otomatis, serta kalkulasi total bunga bersih (Net Interest) pada kartu dompet',
+      'Akumulasi Limit Kategori Pengeluaran: Penambahan informasi badge Total Limit bulanan pada halaman pengaturan kategori pengeluaran',
+      'Indikator Status Pencatatan Transaksi Rutin: Penambahan badge hijau "Tercatat bln ini" pada kartu transaksi rutin yang telah dieksekusi di bulan berjalan',
+    ],
+  },
+  {
     version: 'v1.3.3',
     date: '27 Okt 2026',
-    isLatest: true,
+    isLatest: false,
     features: [
       'Fitur Drag & Drop Re-arrange Dompet: Atur urutan tampilan kartu dompet dengan mudah menggunakan drag handle khusus dan tersimpan permanen ke database',
       'Analitik Pertumbuhan Saldo MoM (Month-over-Month): Indikator persentase perubahan saldo bulanan dinamis di Beranda Desktop dan Mobile',

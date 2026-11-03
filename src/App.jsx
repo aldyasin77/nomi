@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { BrowserRouter, Routes, Route, Outlet } from 'react-router-dom'
 import { Toaster } from 'react-hot-toast'
 import { AuthProvider, useAuth } from './context/AuthContext'
-import { processDueRecurringTransactions } from './lib/recurringAutomation'
+import { supabase, isSupabaseConfigured } from './lib/supabase'
 import ProtectedRoute from './components/layout/ProtectedRoute'
 import Sidebar from './components/layout/Sidebar'
 import BottomNav from './components/layout/BottomNav'
@@ -19,15 +19,30 @@ import SettingsPage from './pages/SettingsPage'
 function AppLayout() {
   const { user } = useAuth()
 
-  // Trigger lazy evaluation pencatatan transaksi rutin yang jatuh tempo
+  // Eksekusi atomik transaksi rutin yang jatuh tempo via Database RPC
   useEffect(() => {
-    if (user) {
-      processDueRecurringTransactions(user)
+    if (!user?.id || user?.isDemo || !isSupabaseConfigured) return
+
+    const processRecurring = async () => {
+      const { data, error } = await supabase.rpc('process_due_transactions', {
+        current_user_id: user.id,
+      })
+      if (error) {
+        console.error('Gagal memproses transaksi rutin:', error)
+      } else if (data?.processed_count > 0) {
+        window.dispatchEvent(
+          new CustomEvent('nomi_data_changed', {
+            detail: { source: 'recurring_rpc', count: data.processed_count },
+          })
+        )
+      }
     }
 
+    processRecurring()
+
     const handleVisibilityChange = () => {
-      if (document.visibilityState === 'visible' && user) {
-        processDueRecurringTransactions(user)
+      if (document.visibilityState === 'visible') {
+        processRecurring()
       }
     }
 
